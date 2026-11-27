@@ -1,1111 +1,1131 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>小学生 手書き漢字ドリル</title>
-<style>
-  * {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-  }
-  body {
-    margin: 0;
-    padding: 12px;
-    font-family: "Hiragino Maru Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
-    background-color: #f0f8ff;
-    color: #333;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-  }
-  .container {
-    width: 100%;
-    max-width: 700px;
-    background: #ffffff;
-    border-radius: 20px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    padding: 18px;
-    text-align: center;
-  }
-  h1 {
-    font-size: 1.35rem;
-    color: #1e88e5;
-    margin: 0 0 12px 0;
-  }
-  .grade-bar {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-  }
-  .grade-btn {
-    padding: 7px 12px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    border: 2px solid #b0bec5;
-    background: #fff;
-    color: #455a64;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .grade-btn.active {
-    background: #ff9800;
-    color: #fff;
-    border-color: #f57c00;
-  }
-  .grade-btn.special {
-    border-color: #ef5350;
-    color: #d32f2f;
-  }
-  .grade-btn.special.active {
-    background: #e53935;
-    color: #fff;
-    border-color: #c62828;
-  }
-  .settings-bar {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-  .mode-btn {
-    padding: 6px 15px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    border: 2px solid #90caf9;
-    background: #fff;
-    color: #1976d2;
-    border-radius: 999px;
-    cursor: pointer;
-  }
-  .mode-btn.active {
-    background: #1976d2;
-    color: #fff;
-    border-color: #1976d2;
-  }
-  .progress-bar {
-    font-size: 1.05rem;
-    font-weight: bold;
-    color: #555;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #e3f2fd;
-    padding: 8px 16px;
-    border-radius: 12px;
-  }
-  .question-box {
-    background: #fffde7;
-    border: 3px solid #ffe082;
-    border-radius: 16px;
-    padding: 14px;
-    margin-bottom: 14px;
-  }
-  .reading-label {
-    display: inline-block;
-    background: #ff9800;
-    color: #fff;
-    font-size: 0.9rem;
-    font-weight: bold;
-    padding: 3px 12px;
-    border-radius: 999px;
-    margin-bottom: 6px;
-  }
-  .reading-text {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #e65100;
-    margin: 2px 0 8px 0;
-    letter-spacing: 0.08em;
-  }
-  .sentence-text {
-    font-size: 1.35rem;
-    line-height: 1.6;
-    color: #333;
-  }
-  .target-blank {
-    display: inline-block;
-    background: #fff;
-    border: 2px dashed #ff9800;
-    color: #e65100;
-    font-weight: bold;
-    padding: 0 10px;
-    margin: 0 4px;
-    border-radius: 8px;
-  }
-  .canvas-area {
-    position: relative;
-    width: 300px;
-    height: 300px;
-    margin: 0 auto 14px auto;
-    border: 4px solid #4caf50;
-    border-radius: 16px;
-    background: #fff;
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-    overflow: hidden;
-  }
-  canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    cursor: crosshair;
-    touch-action: none;
-  }
-  #guideSvg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    opacity: 0.9;
-  }
-  .stroke-count-badge {
-    position: absolute;
-    top: 8px;
-    right: 10px;
-    background: rgba(255,255,255,0.92);
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 2px 8px;
-    font-size: 0.85rem;
-    font-weight: bold;
-    color: #555;
-    pointer-events: none;
-  }
-  .controls {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-  }
-  button.action-btn {
-    font-family: inherit;
-    font-size: 1.05rem;
-    font-weight: bold;
-    padding: 12px 18px;
-    border: none;
-    border-radius: 14px;
-    cursor: pointer;
-    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
-    transition: transform 0.05s;
-  }
-  button.action-btn:active {
-    transform: translateY(2px);
-    box-shadow: 0 1px 0 rgba(0,0,0,0.15);
-  }
-  button.action-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-  .btn-undo { background: #eceff1; color: #37474f; }
-  .btn-clear { background: #ffebee; color: #c62828; }
-  .btn-check { background: #4caf50; color: #fff; font-size: 1.15rem; padding: 12px 26px; }
-  .btn-next { background: #1e88e5; color: #fff; font-size: 1.15rem; padding: 12px 28px; }
-  .btn-replay { background: #fff3e0; color: #ef6c00; border: 2px solid #ffb74d !important; }
-  .btn-retry-wrong { background: #ff7043; color: #fff; font-size: 1.1rem; padding: 12px 22px; }
+<!DOCTYPE html>  
+<html lang="ja">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f0f8ff">
+<meta name="description" content="小学生向けの無料手書き漢字ドリル。学年別の漢字を、書き順を確認しながら練習できます。">  
+<title>小学生 手書き漢字ドリル｜無料で練習</title>  
+<style>  
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}  
+html{scroll-behavior:smooth} body{margin:0;padding:clamp(8px,2.5vw,18px);font-family:"Hiragino Maru Gothic ProN","Yu Gothic","Meiryo",sans-serif;background:#f0f8ff;color:#333;display:flex;justify-content:center}  
+.container{width:100%;max-width:700px;min-width:0;background:#fff;border-radius:20px;box-shadow:0 6px 18px rgba(0,0,0,.08);padding:18px;text-align:center}  
+h1{font-size:1.3rem;color:#1e88e5;margin:0 0 12px}  
+.grade-bar,.settings-bar{display:flex;justify-content:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}  
+.grade-btn,.mode-btn{padding:8px 13px;font:inherit;font-size:.92rem;font-weight:bold;border:2px solid #b0bec5;background:#fff;color:#455a64;border-radius:12px;cursor:pointer}  
+.mode-btn{border-radius:999px;border-color:#90caf9;color:#1976d2}  
+.grade-btn.active{background:#ff9800;color:#fff;border-color:#f57c00}  
+.mode-btn.active{background:#1976d2;color:#fff;border-color:#1976d2}  
+.grade-btn.special{border-color:#ef5350;color:#d32f2f}  
+.grade-btn.special.active{background:#e53935;color:#fff}  
+.reward-bar{display:flex;justify-content:space-between;align-items:center;background:#fff8e1;border:2px solid #ffd54f;border-radius:14px;padding:8px 14px;margin-bottom:12px;font-size:.92rem;font-weight:bold;color:#5d4037;flex-wrap:wrap;gap:6px}  
+.reward-badge{background:#fff;padding:3px 10px;border-radius:999px;border:1px solid #ffe082;margin-right:6px;display:inline-block}  
+.btn-stamp-book{background:#ff8f00;color:#fff;border:none;border-radius:999px;padding:6px 12px;font:inherit;font-size:.85rem;font-weight:bold;cursor:pointer}  
+.progress-bar{display:flex;justify-content:space-between;background:#e3f2fd;padding:8px 16px;border-radius:12px;margin-bottom:10px;font-weight:bold;color:#555}  
+.question-box{background:#fffde7;border:3px solid #ffe082;border-radius:16px;padding:14px;margin-bottom:14px}  
+.reading-label{display:inline-block;background:#ff9800;color:#fff;font-size:.9rem;font-weight:bold;padding:3px 12px;border-radius:999px}  
+.reading-text{font-size:1.8rem;font-weight:bold;color:#e65100;margin:4px 0 8px;letter-spacing:.08em}  
+.sentence-text{font-size:1.3rem;line-height:1.6}  
+.target-blank{display:inline-block;background:#fff;border:2px dashed #ff9800;color:#e65100;font-weight:bold;padding:0 10px;margin:0 4px;border-radius:8px}  
+.canvas-area{position:relative;width:min(380px,100%);max-width:100%;aspect-ratio:1/1;margin:0 auto 14px;border:4px solid #4caf50;border-radius:16px;background:#fff;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}  
+canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none}  
+#guideSvg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}  
+.stroke-count-badge{position:absolute;top:8px;right:10px;background:rgba(255,255,255,.92);border:1px solid #ccc;border-radius:8px;padding:2px 8px;font-size:.85rem;font-weight:bold;color:#555;pointer-events:none}  
+.toast-msg{display:none;background:#ff7043;color:#fff;font-weight:bold;padding:10px 16px;border-radius:12px;margin-bottom:12px}  
+.controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}  
+.action-btn{font:inherit;font-size:1.05rem;font-weight:bold;padding:12px 18px;border:none;border-radius:14px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.15)}  
+.action-btn:active{transform:translateY(2px)}  
+.action-btn:disabled{opacity:.45;cursor:not-allowed}  
+.btn-undo{background:#eceff1;color:#37474f}.btn-clear{background:#ffebee;color:#c62828}  
+.btn-check{background:#4caf50;color:#fff}.btn-next{background:#1e88e5;color:#fff}  
+.btn-replay{background:#fff3e0;color:#ef6c00}.btn-retry-wrong{background:#ff7043;color:#fff}  
+.feedback-box{display:none;margin-top:10px;padding:14px;border-radius:14px;font-size:1.1rem;font-weight:bold;line-height:1.55}  
+.feedback-ok{background:#e8f5e9;border:2px solid #66bb6a;color:#2e7d32}  
+.feedback-ng{background:#fff3e0;border:2px solid #ffa726;color:#d84315}  
+.feedback-info{background:#e3f2fd;border:2px solid #64b5f6;color:#1565c0}  
+.result-screen,.empty-notice{display:none}  
+.empty-notice{background:#fff3e0;border:2px solid #ffb74d;border-radius:14px;padding:20px;margin:16px 0;font-weight:bold;color:#e65100}  
+.hanamaru{font-size:5rem;margin:10px 0}  
+.score-text{font-size:1.7rem;font-weight:bold;color:#e65100;margin-bottom:14px}  
+.review-list{text-align:left;background:#fafafa;border-radius:12px;padding:12px;margin-bottom:16px}  
+.review-item{display:flex;justify-content:space-between;padding:8px 6px;border-bottom:1px solid #eee}  
+.review-kanji{font-size:1.6rem;font-weight:bold;color:#1976d2;margin-right:10px}  
+.loading-msg{color:#666;font-size:.95rem;margin:8px 0;display:none}  
+.reward-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;justify-content:center;align-items:center;padding:16px}  
+.reward-modal-content{background:#fff;border-radius:20px;max-width:500px;width:100%;padding:20px;max-height:85vh;overflow-y:auto}  
+.grade-progress-row{display:flex;align-items:center;padding:10px 8px;border-bottom:1px solid #eee;font-size:.95rem}  
+.progress-track{flex:1;height:12px;background:#eceff1;border-radius:999px;margin:0 10px;overflow:hidden}  
+.progress-fill{height:100%;background:#4caf50}  
 
-  .feedback-box {
-    display: none;
-    margin-top: 10px;
-    padding: 14px;
-    border-radius: 14px;
-    font-size: 1.12rem;
-    font-weight: bold;
-    line-height: 1.55;
-  }
-  .feedback-ok {
-    background: #e8f5e9;
-    border: 2px solid #66bb6a;
-    color: #2e7d32;
-  }
-  .feedback-ng {
-    background: #fff3e0;
-    border: 2px solid #ffa726;
-    color: #d84315;
-  }
-  .answer-kanji-display {
-    font-size: 1.35rem;
-    margin-top: 6px;
-    color: #333;
-  }
-
-  /* 結果画面 */
-  .result-screen {
-    display: none;
-    padding: 10px;
-  }
-  .hanamaru {
-    font-size: 5.5rem;
-    line-height: 1.1;
-    margin: 10px 0;
-  }
-  .score-text {
-    font-size: 1.75rem;
-    font-weight: bold;
-    color: #e65100;
-    margin-bottom: 14px;
-  }
-  .review-list {
-    text-align: left;
-    background: #fafafa;
-    border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 16px;
-  }
-  .review-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 6px;
-    border-bottom: 1px solid #eee;
-    font-size: 1.05rem;
-  }
-  .review-item:last-child { border-bottom: none; }
-  .review-kanji {
-    font-size: 1.6rem;
-    font-weight: bold;
-    color: #1976d2;
-    margin-right: 10px;
-  }
-  .loading-msg {
-    color: #666;
-    font-size: 0.95rem;
-    margin: 8px 0;
-  }
-  .empty-notice {
-    display: none;
-    background: #fff3e0;
-    border: 2px solid #ffb74d;
-    border-radius: 14px;
-    padding: 20px;
-    margin: 16px 0;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #e65100;
-    line-height: 1.6;
-  }
-</style>
-</head>
-<body>
-
-<div class="container">
+/* 公開版：スマートフォン・タブレット・キーボード操作への配慮 */
+button{min-height:42px}
+button:focus-visible{outline:3px solid #0d47a1;outline-offset:3px}
+.grade-btn,.mode-btn,.action-btn,.btn-stamp-book{touch-action:manipulation}
+.progress-bar{gap:8px;flex-wrap:wrap}
+.reward-bar>div{display:flex;gap:6px;flex-wrap:wrap}
+.reward-badge{margin-right:0}
+.canvas-area{width:min(380px,100%);aspect-ratio:1/1}
+#drawCanvas{width:100%;height:100%}
+.help-note{max-width:560px;margin:8px auto 14px;color:#546e7a;font-size:.88rem;line-height:1.6}
+.app-footer{margin-top:18px;padding-top:10px;border-top:1px solid #e8eef2;color:#607d8b;font-size:.78rem;line-height:1.6}
+@media(max-width:480px){
+  body{padding:6px}
+  .container{padding:12px;border-radius:14px}
+  h1{font-size:1.12rem}
+  .grade-btn,.mode-btn{padding:8px 10px;font-size:.86rem}
+  .question-box{padding:10px}
+  .reading-text{font-size:1.55rem}
+  .sentence-text{font-size:1.12rem}
+  .action-btn{font-size:.94rem;padding:11px 13px;flex:1 1 auto}
+  .controls{gap:8px}
+  .progress-bar{font-size:.88rem;padding:8px 10px}
+  .reward-bar{justify-content:center}
+  .reward-modal-content{padding:16px}
+  .review-item{gap:8px;align-items:center}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>  
+</head>  
+<body>  
+<div class="container">  
   <h1 id="appTitle">✏️ しょうがくせい てがきかんじドリル</h1>
-
-  <!-- 学年・モード選択バー -->
-  <div class="grade-bar" id="gradeBar">
-    <button class="grade-btn active" onclick="changeGrade('1', this)">1ねん</button>
-    <button class="grade-btn" onclick="changeGrade('2', this)">2ねん</button>
-    <button class="grade-btn" onclick="changeGrade('3', this)">3ねん</button>
-    <button class="grade-btn" onclick="changeGrade('4', this)">4ねん</button>
-    <button class="grade-btn" onclick="changeGrade('5', this)">5年</button>
-    <button class="grade-btn" onclick="changeGrade('6', this)">6年</button>
-    <button class="grade-btn special" onclick="changeGrade('tricky', this)">🔥 筆順とっくん</button>
-  </div>
-
-  <!-- 問題数選択バー -->
-  <div class="settings-bar" id="settingsBar">
-    <button class="mode-btn active" id="btnSet5" onclick="changeSetSize(5, this)">1かい 5もん</button>
-    <button class="mode-btn" id="btnSet10" onclick="changeSetSize(10, this)">1かい 10もん</button>
-  </div>
-
-  <!-- データ準備中メッセージ（未追加学年用） -->
+  <p class="help-note">よみがなと れいぶんを みて、みどりの わくの中に かんじを かこう。かきおわったら「こたえあわせ」を おしてね。</p>  
+  <div class="reward-bar">  
+    <div><span class="reward-badge" id="todayCountBadge"></span><span class="reward-badge" id="gradeMasterBadge"></span></div>  
+    <button class="btn-stamp-book" id="stampBookBtn" onclick="openRewardModal()">🏆 きろくを見る</button>  
+  </div>  
+  <div class="reward-modal" id="rewardModal" onclick="if(event.target===this)closeRewardModal()">  
+    <div class="reward-modal-content">  
+      <h2 style="margin-top:0;color:#e65100" id="modalTitle">🏆 がんばりスタンプ帳</h2>  
+      <div id="modalSummary" style="font-weight:bold;margin-bottom:12px"></div>  
+      <div id="modalGradeList" style="margin-bottom:16px"></div>  
+      <div id="storageNote" style="font-size:.8rem;color:#888;margin-bottom:12px"></div>  
+      <button class="action-btn btn-next" onclick="closeRewardModal()">とじる</button>  
+    </div>  
+  </div>  
+  <div class="grade-bar">  
+    <button class="grade-btn active" onclick="changeGrade('1',this)">1ねん</button>  
+    <button class="grade-btn" onclick="changeGrade('2',this)">2ねん</button>  
+    <button class="grade-btn" onclick="changeGrade('3',this)">3ねん</button>  
+    <button class="grade-btn" onclick="changeGrade('4',this)">4ねん</button>  
+    <button class="grade-btn" onclick="changeGrade('5',this)">5年</button>  
+    <button class="grade-btn" onclick="changeGrade('6',this)">6年</button>  
+    <button class="grade-btn special" onclick="changeGrade('tricky',this)">🔥 筆順とっくん</button>  
+  </div>  
+  <div class="settings-bar">  
+    <button class="mode-btn active" id="btnSet5" onclick="changeSetSize(5,this)">1かい 5もん</button>  
+    <button class="mode-btn" id="btnSet10" onclick="changeSetSize(10,this)">1かい 10もん</button>  
+  </div>  
   <div class="empty-notice" id="emptyNotice"></div>
 
-  <!-- クイズ画面 -->
-  <div id="quizScreen">
-    <div class="progress-bar">
-      <span id="progressText">だい 1 もん / 5 もん</span>
-      <span id="gradeBadge">1ねんせいの かんじ</span>
-    </div>
-
-    <div class="question-box">
-      <div class="reading-label" id="readingLabel">よみがな</div>
-      <div class="reading-text" id="readingText">やま</div>
-      <div class="sentence-text" id="sentenceText">たかい <span class="target-blank">やま</span> に のぼる。</div>
-    </div>
-
-    <div class="loading-msg" id="loadingMsg" style="display:none;">データを よみこみちゅう...</div>
-
-    <div class="canvas-area">
-      <canvas id="drawCanvas" width="300" height="300"></canvas>
-      <svg id="guideSvg" viewBox="0 0 109 109"></svg>
-      <div class="stroke-count-badge" id="strokeBadge">0 かく</div>
-    </div>
-
-    <div class="controls" id="drawControls">
-      <button class="action-btn btn-undo" id="undoBtn" onclick="undoStroke()">↩️ 1かく もどる</button>
-      <button class="action-btn btn-clear" id="clearBtn" onclick="clearCanvas()">🗑️ ぜんぶ けす</button>
-      <button class="action-btn btn-check" id="checkBtn" onclick="checkAnswer()">⭕ こたえあわせ</button>
-    </div>
-
-    <div class="feedback-box" id="feedbackBox">
-      <div id="feedbackMessage"></div>
-      <div class="answer-kanji-display" id="answerKanjiDisplay"></div>
-      <div class="controls" style="margin-top:12px; margin-bottom:0;">
-        <button class="action-btn btn-replay" id="replayBtn" onclick="playStrokeAnimation()">▶️ かきじゅんを みる</button>
-        <button class="action-btn btn-next" id="nextBtn" onclick="nextQuestion()">つぎの もんだいへ ➡️</button>
-      </div>
-    </div>
+  <div id="quizScreen">  
+    <div class="progress-bar"><span id="progressText"></span><span id="gradeBadge"></span></div>  
+    <div class="question-box">  
+      <div class="reading-label" id="readingLabel">よみがな</div>  
+      <div class="reading-text" id="readingText"></div>  
+      <div class="sentence-text" id="sentenceText"></div>  
+    </div>  
+    <div class="loading-msg" id="loadingMsg" role="status" aria-live="polite">おてほんを よみこみちゅう...</div>  
+    <div class="canvas-area" role="group" aria-label="漢字を書く場所">  
+      <canvas id="drawCanvas" width="380" height="380" aria-label="指またはマウスで漢字を書くキャンバス"></canvas>  
+      <svg id="guideSvg" viewBox="0 0 109 109"></svg>  
+      <div class="stroke-count-badge" id="strokeBadge" aria-live="polite">0 かく</div>  
+    </div>  
+    <div class="toast-msg" id="toastMsg" role="status" aria-live="polite"></div>  
+    <div class="controls" id="drawControls">  
+      <button class="action-btn btn-undo" id="undoBtn" onclick="undoStroke()">↩️ 1かく もどる</button>  
+      <button class="action-btn btn-clear" id="clearBtn" onclick="clearCanvas()">🗑️ ぜんぶ けす</button>  
+      <button class="action-btn btn-check" id="checkBtn" onclick="checkAnswer()">⭕ こたえあわせ</button>  
+    </div>  
+    <div class="feedback-box" id="feedbackBox" role="status" aria-live="polite">  
+      <div id="feedbackMessage"></div>  
+      <div id="answerKanjiDisplay" style="font-size:1.3rem;margin-top:6px"></div>  
+      <div class="controls" style="margin-top:12px;margin-bottom:0">  
+        <button class="action-btn btn-replay" id="replayBtn" onclick="playStrokeAnimation()">▶️ かきじゅんを みる</button>  
+        <button class="action-btn btn-next" id="nextBtn" onclick="nextQuestion()">つぎの もんだいへ ➡️</button>  
+      </div>  
+    </div>  
   </div>
 
-  <!-- 結果画面 -->
-  <div class="result-screen" id="resultScreen">
-    <div class="hanamaru" id="hanamaruIcon">💮</div>
-    <div class="score-text" id="finalScoreText">5もんちゅう 5もん せいかい！</div>
-    <div class="review-list" id="reviewList"></div>
-    <div class="controls">
-      <button class="action-btn btn-retry-wrong" id="retryWrongBtn" style="display:none;" onclick="startWrongReview()">💪 まちがえた漢字だけ 復習する</button>
-      <button class="action-btn btn-check" id="restartBtn" onclick="startNewSet()">🔄 もういちど ちょうせんする</button>
-    </div>
-  </div>
+  <div class="result-screen" id="resultScreen">  
+    <div class="hanamaru" id="hanamaruIcon">💮</div>  
+    <div class="score-text" id="finalScoreText"></div>  
+    <div class="review-list" id="reviewList"></div>  
+    <div class="controls">  
+      <button class="action-btn btn-retry-wrong" id="retryWrongBtn" style="display:none" onclick="startWrongReview()"></button>  
+      <button class="action-btn btn-check" id="restartBtn" onclick="startNewSet()">🔄 もういちど ちょうせんする</button>  
+    </div>  
+  </div>  
 </div>
 
-<script>
-// =========================================================================
-// 漢字マスターデータ配列
-// 形式: [漢字, 読み, 例文(【】内が対象), 学年, 筆順特訓フラグ(true/false)]
-// ※ステップ2・3で作成した3〜6年生の配列をここに追加していくだけで拡張できます
-// =========================================================================
+<script>  
+// ==========================================================  
+// 漢字データ  形式: [漢字, 読み(自動補正されます), 例文(【】内が答えの読み), 学年, 筆順特訓フラグ]  
+// ↓↓ 元のファイルの KANJI_DATA の中身（[ ] の内側）を、下の「ここから」〜「ここまで」の間に貼り付けてください ↓↓  
+// ==========================================================  
 const KANJI_DATA = [
-  // --- 1年生 (80字：完全検算済み) ---
-  ["一","いち","【いち】ばんに なる。",1,false],["右","みぎ","【みぎ】の てを あげる。",1,true],["雨","あめ","【あめ】が ふってきた。",1,false],["円","えん","ひゃく【えん】だまを もつ。",1,false],
+
+
+["一","いち","【いち】ばんに なる。",1,false],["右","みぎ","【みぎ】の てを あげる。",1,true],["雨","あめ","【あめ】が ふってきた。",1,false],["円","えん","ひゃく【えん】だまを もつ。",1,false],
+
   ["王","おう","くにの 【おう】さま。",1,true],["音","おと","きれいな 【おと】が なる。",1,false],["下","した","つくえの 【した】を みる。",1,true],["火","ひ","キャンプの 【ひ】を つける。",1,true],
+
   ["花","はな","きれいな 【はな】が さく。",1,false],["貝","かい","うみで 【かい】を ひろう。",1,false],["学","がく","しょう【がく】 いちねんせい。",1,false],["気","き","げん【き】に あいさつする。",1,false],
+
   ["九","きゅう","【きゅう】じに ねる。",1,true],["休","やす","がっこうを 【やす】む。",1,false],["玉","だま","しゃぼん【だま】を とばす。",1,false],["金","きん","【きん】ようびに あそぶ。",1,false],
+
   ["空","そら","あおい 【そら】を みあげる。",1,false],["月","つき","よるに 【つき】が でる。",1,false],["犬","いぬ","かわいい 【いぬ】と さんぽする。",1,false],["見","み","テレビを 【み】る。",1,false],
+
   ["五","ご","りんごを 【ご】こ かう。",1,false],["口","くち","おおきな 【くち】を あける。",1,false],["校","こう","がっ【こう】へ いく。",1,false],["左","ひだり","【ひだり】へ まがる。",1,true],
+
   ["三","さん","【さん】びきの こぶた。",1,false],["山","やま","たかい 【やま】に のぼる。",1,true],["子","こ","げんきな 【こ】どもたち。",1,false],["四","よん","【よん】にんで あそぶ。",1,false],
+
   ["糸","いと","あかい 【いと】を むすぶ。",1,true],["字","じ","ていねいに 【じ】を かく。",1,false],["耳","みみ","うさぎの ながい 【みみ】。",1,true],["七","なな","【なな】つの ほし。",1,false],
+
   ["車","くるま","あかい 【くるま】に のる。",1,true],["手","て","きれいに 【て】を あらう。",1,false],["十","じゅう","【じゅう】まで かぞえる。",1,false],["出","で","そとに 【で】て あそぶ。",1,true],
+
   ["女","おんな","【おんな】の こが わらう。",1,true],["小","ちい","【ちい】さな あり。",1,true],["上","うえ","つくえの 【うえ】に おく。",1,true],["森","もり","ふかい 【もり】の なか。",1,false],
+
   ["人","ひと","たくさんの 【ひと】が いる。",1,false],["水","みず","つめたい 【みず】を のむ。",1,true],["正","ただ","【ただ】しい こたえを かく。",1,false],["生","い","【い】きものを たいせつにする。",1,false],
+
   ["青","あお","【あお】い うみ。",1,false],["夕","ゆう","【ゆう】がたに かえる。",1,false],["石","いし","まるい 【いし】を ひろう。",1,false],["赤","あか","【あか】い りんご。",1,false],
+
   ["千","せん","【せん】えん さつ。",1,false],["川","かわ","ながい 【かわ】を およぐ。",1,false],["先","さき","みんなより 【さき】に いく。",1,false],["早","はや","あさ 【はや】く おきる。",1,false],
+
   ["草","くさ","みどりの 【くさ】が はえる。",1,false],["足","あし","【あし】が はやい。",1,false],["村","むら","やまの なかの 【むら】。",1,false],["大","おお","【おお】きな ぞう。",1,false],
+
   ["男","おとこ","【おとこ】の こが はしる。",1,false],["竹","たけ","まっすぐな 【たけ】。",1,false],["中","なか","はこの 【なか】を みる。",1,false],["虫","むし","くさの なかの 【むし】。",1,false],
+
   ["町","まち","にぎやかな 【まち】へ いく。",1,false],["天","てん","いい 【てん】きに なる。",1,false],["田","た","おこめを つくる 【た】んぼ。",1,true],["土","つち","【つち】を ほる。",1,false],
+
   ["二","に","【に】ひきの ねこ。",1,false],["日","ひ","はれの 【ひ】に でかける。",1,false],["入","はい","おふろに 【はい】る。",1,false],["年","ねん","いち【ねん】せいに なる。",1,true],
+
   ["白","しろ","【しろ】い くも。",1,false],["八","はち","【はち】じに おきる。",1,false],["百","ひゃく","【ひゃく】てんを とる。",1,false],["文","ぶん","みじかい 【ぶん】を かく。",1,false],
+
   ["木","き","おおきな 【き】に のぼる。",1,false],["本","ほん","おもしろい 【ほん】を よむ。",1,false],["名","な","【な】まえを かく。",1,false],["目","め","おおきな 【め】を あける。",1,false],
+
   ["立","た","せきから 【た】つ。",1,false],["力","ちから","【ちから】を あわせる。",1,true],["林","はやし","くりの 【はやし】を あるく。",1,false],["六","ろく","【ろく】にんの ともだち。",1,false],
 
-  // --- 2年生 (160字：完全検算済み) ---
+  // --- 2年生 (160字) ---
+
   ["引","ひ","つなを 【ひ】っぱる。",2,false],["羽","はね","とりの 【はね】。",2,false],["雲","くも","しろい 【くも】が うかぶ。",2,false],["園","えん","こう【えん】で あそぶ。",2,false],
+
   ["遠","とお","【とお】くの やまを みる。",2,false],["何","なに","【なに】を していますか。",2,false],["科","か","り【か】の じゅぎょう。",2,false],["夏","なつ","あつい 【なつ】が くる。",2,false],
+
   ["家","いえ","あたらしい 【いえ】。",2,false],["歌","うた","たのしく 【うた】を うたう。",2,false],["画","が","ず【が】こうさくの じかん。",2,false],["回","まわ","こまが 【まわ】る。",2,false],
+
   ["会","あ","ともだちに 【あ】う。",2,false],["海","うみ","ひろい 【うみ】で およぐ。",2,false],["絵","え","クレヨンで 【え】を かく。",2,false],["外","そと","【そと】で げんきに あそぶ。",2,false],
+
   ["角","かど","つくえの 【かど】。",2,false],["楽","たの","【たの】しい えんそく。",2,false],["活","かつ","せいかつ【かつ】かの べんきょう。",2,false],["間","あいだ","きと きの 【あいだ】。",2,false],
+
   ["丸","まる","おおきな 【まる】を かく。",2,true],["岩","いわ","おおきな 【いわ】。",2,false],["顔","かお","にこにこした 【かお】。",2,false],["汽","き","【き】しゃに のる。",2,false],
+
   ["記","き","にっ【き】を かく。",2,false],["帰","かえ","おうちに 【かえ】る。",2,false],["弓","ゆみ","【ゆみ】と や。",2,true],["牛","うし","ぼくじょうの 【うし】。",2,true],
+
   ["魚","さかな","かわの 【さかな】。",2,false],["京","きょう","とう【きょう】へ いく。",2,false],["強","つよ","【つよ】い かぜが ふく。",2,false],["教","おし","かんじを 【おし】える。",2,false],
+
   ["近","ちか","がっこうの 【ちか】く。",2,false],["兄","あに","やさしい 【あに】。",2,false],["形","かたち","まるい 【かたち】。",2,false],["計","けい","と【けい】を みる。",2,false],
+
   ["元","げん","【げん】きに はしる。",2,false],["言","い","ありがとうと 【い】う。",2,false],["原","はら","ひろい の【はら】。",2,false],["戸","と","へやの 【と】を しめる。",2,false],
+
   ["古","ふる","【ふる】い おてら。",2,false],["午","ご","【ご】ぜんちゅうに おわる。",2,false],["後","うし","【うし】ろを むく。",2,false],["語","ご","こく【ご】の テスト。",2,false],
+
   ["工","こう","ず【こう】で つくる。",2,false],["公","こう","【こう】えんの ブランコ。",2,false],["広","ひろ","【ひろ】い こうてい。",2,false],["交","こう","【こう】つうあんぜん。",2,false],
+
   ["光","ひかり","たいようの 【ひかり】。",2,true],["考","かんが","よく 【かんが】える。",2,true],["行","い","がっこうに 【い】く。",2,false],["高","たか","【たか】い ビル。",2,false],
+
   ["黄","き","【き】いろい はな。",2,false],["合","あ","こたえが 【あ】う。",2,false],["谷","たに","ふかい 【たに】。",2,false],["国","くに","にほんの 【くに】。",2,false],
+
   ["黒","くろ","【くろ】い ねこ。",2,false],["今","いま","【いま】 なんじですか。",2,false],["才","さい","なな【さい】に なる。",2,false],["細","ほそ","【ほそ】い みち。",2,false],
+
   ["作","つく","おりがみを 【つく】る。",2,false],["算","さん","【さん】すうの べんきょう。",2,false],["止","と","あかしんごうで 【と】まる。",2,true],["市","し","【し】やくしょへ いく。",2,false],
+
   ["矢","や","ゆみと 【や】。",2,false],["姉","あね","やさしい 【あね】。",2,false],["思","おも","たのしいと 【おも】う。",2,false],["紙","かみ","しろい 【かみ】に かく。",2,false],
+
   ["寺","てら","やまの お【てら】。",2,false],["自","じ","【じ】ぶんで やってみる。",2,false],["時","じ","なん【じ】に おきますか。",2,false],["室","しつ","きょう【しつ】に はいる。",2,false],
+
   ["社","じゃ","じん【じゃ】に おまいりする。",2,false],["弱","よわ","【よわ】い むし。",2,false],["首","くび","きりんの ながい 【くび】。",2,false],["秋","あき","すずしい 【あき】が くる。",2,false],
+
   ["春","はる","あたたかい 【はる】。",2,false],["書","か","かんじを 【か】く。",2,false],["少","すこ","【すこ】し やすむ。",2,false],["場","じょう","うんどう【じょう】で はしる。",2,false],
+
   ["色","いろ","すきな 【いろ】を えらぶ。",2,false],["食","た","ごはんを 【た】べる。",2,false],["心","こころ","やさしい 【こころ】。",2,true],["新","あたら","【あたら】しい くつ。",2,false],
+
   ["親","しん","【しん】せつな ひと。",2,false],["図","ず","ち【ず】を みる。",2,false],["数","かず","【かず】を かぞえる。",2,false],["西","にし","【にし】の そら。",2,false],
+
   ["声","こえ","おおきな 【こえ】で よむ。",2,false],["星","ほし","よぞらの 【ほし】。",2,false],["晴","は","あしたは 【は】れる。",2,false],["切","き","はさみで 【き】る。",2,false],
+
   ["雪","ゆき","しろい 【ゆき】が ふる。",2,false],["船","ふね","おおきな 【ふね】に のる。",2,false],["線","せん","まっすぐな 【せん】を ひく。",2,false],["前","まえ","みんなの 【まえ】に たつ。",2,false],
+
   ["組","くみ","いちねん いち【くみ】。",2,false],["走","はし","こうていを 【はし】る。",2,false],["多","おお","ひとが 【おお】い。",2,false],["太","ふと","【ふと】い えんぴつ。",2,false],
+
   ["体","からだ","【からだ】を うごかす。",2,false],["台","だい","【だい】どころで てつだう。",2,false],["地","ち","【ち】ずを ひろげる。",2,false],["池","いけ","こうえんの 【いけ】。",2,false],
+
   ["知","し","なまえを 【し】っている。",2,false],["茶","ちゃ","あたたかい お【ちゃ】。",2,false],["昼","ひる","【ひる】ごはんを たべる。",2,false],["長","なが","【なが】い へび。",2,true],
+
   ["鳥","とり","そらを とぶ 【とり】。",2,false],["朝","あさ","【あさ】ごはんを たべる。",2,false],["直","なお","まちがいを 【なお】す。",2,false],["通","とお","みちを 【とお】る。",2,false],
+
   ["弟","おとうと","かわいい 【おとうと】。",2,false],["店","みせ","パンの 【みせ】に いく。",2,false],["点","てん","ひゃく【てん】 まんてん。",2,false],["電","でん","【でん】しゃに のる。",2,false],
+
   ["刀","かたな","さむらいの 【かたな】。",2,true],["冬","ふゆ","さむい 【ふゆ】が くる。",2,false],["当","あ","クイズに 【あ】たる。",2,false],["東","ひがし","【ひがし】から ひが のぼる。",2,false],
+
   ["答","こた","しつもんに 【こた】える。",2,false],["頭","あたま","【あたま】が いい。",2,false],["同","おな","【おな】じ クラス。",2,false],["道","みち","まっすぐな 【みち】。",2,false],
+
   ["読","よ","ほんを 【よ】む。",2,false],["内","うち","いえの 【うち】と そと。",2,false],["南","みなみ","【みなみ】の しま。",2,false],["肉","にく","おいしい お【にく】。",2,false],
+
   ["馬","うま","はやく はしる 【うま】。",2,true],["売","う","おみせで 【う】る。",2,false],["買","か","おかしを 【か】う。",2,false],["麦","むぎ","【むぎ】ちゃを のむ。",2,false],
+
   ["半","はん","りんごを 【はん】ぶんにする。",2,false],["番","ばん","いち【ばん】 まえ。",2,false],["父","ちち","わたしの 【ちち】。",2,false],["風","かぜ","つよい 【かぜ】が ふく。",2,false],
+
   ["分","わ","おかしを 【わ】ける。",2,false],["聞","き","おんがくを 【き】く。",2,false],["米","こめ","お【こめ】を たく。",2,false],["歩","ある","がっこうまで 【ある】く。",2,false],
+
   ["母","はは","わたしの 【はは】。",2,true],["方","ほう","みぎの 【ほう】へ いく。",2,true],["北","きた","【きた】の ほうこう。",2,true],["毎","まい","【まい】にち べんきょうする。",2,false],
+
   ["妹","いもうと","げんきな 【いもうと】。",2,false],["万","まん","いち【まん】えん。",2,true],["明","あか","【あか】るい へや。",2,false],["鳴","な","とりが 【な】く。",2,false],
+
   ["毛","け","ねこの ふわふわの 【け】。",2,false],["門","もん","がっこうの 【もん】。",2,false],["夜","よる","【よる】に ほしを みる。",2,false],["野","の","【の】はらで あそぶ。",2,false],
+
   ["友","とも","なかよしの 【とも】だち。",2,false],["用","よう","【よう】じを すませる。",2,false],["曜","よう","にち【よう】び。",2,false],["来","く","あした ともだちが 【く】る。",2,false],
+
   ["里","さと","ふる【さと】へ かえる。",2,true],["理","り","【り】かの じっけん。",2,false],["話","はなし","たのしい 【はなし】を する。",2,false],
 
-  // --- 筆順特訓・高学年代表サンプル (ステップ2・3でさらに追加) ---
-  ["必","かなら","【かなら】ず やりとげる。",4,true],
-  ["成","せい","さん【せい】する。",4,true],
-  ["飛","と","空を 【と】ぶ。",4,true],
-  ["己","じ","【じ】こ しょうかいを する。",6,true],
-  ["片","かた","【かた】方を 持つ。",6,true]
+  // --- 3年生 前半100字 (悪〜神) ---
+
+  ["悪","わる","【わる】い ことを しない。",3,true],["安","あん","【あん】ぜんに 気をつける。",3,false],["暗","くら","へやが 【くら】くなる。",3,false],["医","い","【い】しゃに みてもらう。",3,true],
+
+  ["委","い","【い】いんに えらばれる。",3,false],["意","い","【い】みを しらべる。",3,false],["育","そだ","花を 【そだ】てる。",3,true],["員","いん","図書【いん】に なる。",3,false],
+
+  ["院","いん","びょう【いん】へ 行く。",3,false],["飲","の","水を 【の】む。",3,false],["運","はこ","にもつを 【はこ】ぶ。",3,false],["泳","およ","海で 【およ】ぐ。",3,false],
+
+  ["駅","えき","【えき】で 電車を まつ。",3,true],["央","おう","まちの 中【おう】。",3,false],["横","よこ","【よこ】に ならぶ。",3,true],["屋","や","パン【や】さんに 行く。",3,false],
+
+  ["温","あたた","【あたた】かい お茶。",3,false],["化","ば","おばけに 【ば】ける。",3,false],["荷","に","【に】もつを 持つ。",3,false],["界","かい","せ【かい】の 国々。",3,false],
+
+  ["開","ひら","本を 【ひら】く。",3,false],["階","かい","二【かい】へ 上がる。",3,true],["寒","さむ","今日は 【さむ】い。",3,false],["感","かん","【かん】そうを 書く。",3,true],
+
+  ["漢","かん","【かん】字の れんしゅう。",3,true],["館","かん","図書【かん】で 本を 読む。",3,false],["岸","きし","川の 【きし】に つく。",3,false],["起","お","朝 早く 【お】きる。",3,true],
+
+  ["期","き","学【き】の はじめ。",3,false],["客","きゃく","お【きゃく】さまが 来る。",3,false],["究","きゅう","けん【きゅう】する。",3,false],["急","いそ","学校へ 【いそ】ぐ。",3,true],
+
+  ["級","きゅう","【きゅう】友と あそぶ。",3,false],["宮","みや","お【みや】まいりに 行く。",3,false],["球","きゅう","野【きゅう】を する。",3,false],["去","きょ","【きょ】年の 夏。",3,true],
+
+  ["橋","はし","大きな 【はし】を わたる。",3,false],["業","ぎょう","じゅ【ぎょう】が はじまる。",3,false],["曲","ま","右へ 【ま】がる。",3,true],["局","きょく","ゆうびん【きょく】へ 行く。",3,false],
+
+  ["銀","ぎん","【ぎん】いろの おりがみ。",3,false],["区","く","【く】やくしょへ 行く。",3,true],["苦","くる","いきが 【くる】しい。",3,false],["具","ぐ","どう【ぐ】を しまう。",3,false],
+
+  ["君","くん","山田【くん】と あそぶ。",3,false],["係","かかり","生き物【かかり】に なる。",3,false],["軽","かる","にもつが 【かる】い。",3,false],["血","ち","【ち】が 出る。",3,true],
+
+  ["決","き","じゅんばんを 【き】める。",3,false],["研","けん","【けん】きゅうの 発表。",3,false],["県","けん","わたしの 住む 【けん】。",3,true],["庫","こ","車【こ】に 入れる。",3,false],
+
+  ["湖","みずうみ","大きな 【みずうみ】。",3,false],["向","む","前を 【む】く。",3,false],["幸","しあわ","【しあわ】せな きもち。",3,true],["港","みなと","大きな 【みなと】。",3,false],
+
+  ["号","ごう","ばん【ごう】を よぶ。",3,false],["根","ね","木の 【ね】っこ。",3,false],["祭","まつ","夏【まつ】りに 行く。",3,true],["皿","さら","お【さら】を あらう。",3,false],
+
+  ["仕","し","お【し】ごとを する。",3,false],["死","し","虫が 【し】んでしまう。",3,false],["使","つか","はさみを 【つか】う。",3,false],["始","はじ","べんきょうを 【はじ】める。",3,false],
+
+  ["指","ゆび","手の 【ゆび】を おる。",3,false],["歯","は","【は】を みがく。",3,false],["詩","し","きれいな 【し】を 読む。",3,false],["次","つぎ","【つぎ】の ページ。",3,false],
+
+  ["事","こと","だいじな 【こと】を 書く。",3,false],["持","も","かばんを 【も】つ。",3,false],["式","しき","入学【しき】に 出る。",3,true],["実","み","りんごの 【み】が なる。",3,true],
+
+  ["写","うつ","しゃしんを 【うつ】す。",3,false],["者","しゃ","い【しゃ】に なる。",3,false],["主","しゅ","【しゅ】やくに なる。",3,false],["守","まも","やくそくを 【まも】る。",3,false],
+
+  ["取","と","ボールを 【と】る。",3,false],["酒","さけ","お【さけ】は 大人になってから。",3,false],["受","う","テストを 【う】ける。",3,true],["州","しゅう","本【しゅう】と 四国。",3,true],
+
+  ["拾","ひろ","ごみを 【ひろ】う。",3,false],["終","お","しゅくだいが 【お】わる。",3,false],["習","なら","ピアノを 【なら】う。",3,false],["集","あつ","みんなが 【あつ】まる。",3,false],
+
+  ["住","す","まちに 【す】む。",3,false],["重","おも","【おも】い にもつ。",3,true],["宿","しゅく","【しゅく】だいを する。",3,false],["所","ところ","あそぶ 【ところ】。",3,true],
+
+  ["暑","あつ","夏は 【あつ】い。",3,false],["助","たす","ともだちを 【たす】ける。",3,false],["昭","しょう","【しょう】わの ころ。",3,false],["消","き","でんきが 【き】える。",3,false],
+
+  ["商","しょう","【しょう】てんがいへ 行く。",3,false],["章","しょう","文【しょう】を 書く。",3,false],["勝","か","しあいに 【か】つ。",3,false],["乗","の","電車に 【の】る。",3,true],
+
+  ["植","う","花を 【う】える。",3,false],["申","もう","おれいを 【もう】しあげる。",3,false],["身","み","【み】の まわりを せいりする。",3,false],["神","かみ","【かみ】さまに おねがいする。",3,false],
+
+  // --- 3年生 後半100字 (真〜和) ---
+
+  ["真","しん","しゃ【しん】を とる。",3,false],["深","ふか","【ふか】い 池。",3,false],["進","すす","前へ 【すす】む。",3,false],["世","せ","【せ】かいの 国々。",3,true],
+
+  ["整","ととの","列を 【ととの】える。",3,false],["昔","むかし","【むかし】の お話。",3,false],["全","ぜん","【ぜん】ぶ 食べる。",3,false],["相","あい","【あい】てを 見る。",3,false],
+
+  ["送","おく","てがみを 【おく】る。",3,false],["想","そう","かん【そう】を 書く。",3,false],["息","いき","【いき】を すう。",3,false],["速","はや","走るのが 【はや】い。",3,false],
+
+  ["族","ぞく","家【ぞく】と 出かける。",3,false],["他","ほか","【ほか】の ひとを まつ。",3,false],["打","う","ボールを 【う】つ。",3,false],["対","たい","反【たい】の いみ。",3,false],
+
+  ["待","ま","ともだちを 【ま】つ。",3,false],["代","か","お兄さんの 【か】わりに 行く。",3,false],["第","だい","【だい】一問に こたえる。",3,false],["題","だい","しゅく【だい】を する。",3,false],
+
+  ["炭","すみ","【すみ】で 火を おこす。",3,false],["短","みじか","【みじか】い えんぴつ。",3,false],["談","だん","先生に そう【だん】する。",3,false],["着","き","ようふくを 【き】る。",3,false],
+
+  ["注","ちゅう","【ちゅう】いして わたる。",3,false],["柱","はしら","木の 【はしら】。",3,false],["丁","ちょう","三【ちょう】めに 住む。",3,false],["帳","ちょう","れんらく【ちょう】を 見る。",3,false],
+
+  ["調","しら","本で 【しら】べる。",3,false],["追","お","いぬを 【お】いかける。",3,false],["定","てい","よ【てい】を たてる。",3,false],["庭","にわ","【にわ】の 花に 水を やる。",3,false],
+
+  ["笛","ふえ","【ふえ】を ふく。",3,false],["鉄","てつ","【てつ】ぼうを する。",3,false],["転","ころ","ボールが 【ころ】がる。",3,false],["都","と","【と】かいへ 行く。",3,false],
+
+  ["度","ど","もう 一【ど】 読む。",3,false],["投","な","ボールを 【な】げる。",3,false],["豆","まめ","【まめ】まきを する。",3,false],["島","しま","ふねで 【しま】へ 行く。",3,false],
+
+  ["湯","ゆ","お【ゆ】を わかす。",3,false],["登","のぼ","山に 【のぼ】る。",3,false],["等","ひと","【ひと】しく 分ける。",3,false],["動","うご","虫が 【うご】く。",3,false],
+
+  ["童","どう","じ【どう】かんへ 行く。",3,false],["農","のう","【のう】かの 仕事。",3,false],["波","なみ","海の 【なみ】。",3,false],["配","くば","プリントを 【くば】る。",3,false],
+
+  ["倍","ばい","二【ばい】の 長さ。",3,false],["箱","はこ","【はこ】に しまう。",3,false],["畑","はたけ","【はたけ】で やさいを 作る。",3,false],["発","はつ","【はつ】表を する。",3,true],
+
+  ["反","はん","【はん】たいの 意見。",3,true],["坂","さか","きゅうな 【さか】を 上る。",3,false],["板","いた","木の 【いた】を 切る。",3,false],["皮","かわ","りんごの 【かわ】を むく。",3,true],
+
+  ["悲","かな","【かな】しい 気持ち。",3,false],["美","うつく","【うつく】しい 花。",3,true],["鼻","はな","ぞうの 長い 【はな】。",3,true],["筆","ふで","【ふで】で 字を 書く。",3,true],
+
+  ["氷","こおり","つめたい 【こおり】。",3,true],["表","おもて","かみの 【おもて】と うら。",3,true],["秒","びょう","十【びょう】 かぞえる。",3,false],["病","びょう","【びょう】いんへ 行く。",3,true],
+
+  ["品","しな","おみせの 【しな】もの。",3,false],["負","ま","しあいに 【ま】ける。",3,false],["部","ぶ","やきゅう【ぶ】に 入る。",3,false],["服","ふく","よう【ふく】を きる。",3,false],
+
+  ["福","ふく","こう【ふく】を いのる。",3,false],["物","もの","いき【もの】を そだてる。",3,false],["平","たい","【たい】らな みち。",3,true],["返","かえ","本を 【かえ】す。",3,false],
+
+  ["勉","べん","【べん】きょうを する。",3,false],["放","はな","とりを 空へ 【はな】す。",3,false],["味","あじ","おいしい 【あじ】。",3,false],["命","いのち","【いのち】を 大切にする。",3,false],
+
+  ["面","めん","お【めん】を かぶる。",3,true],["問","と","先生に 【と】う。",3,true],["役","やく","【やく】に 立つ。",3,false],["薬","くすり","【くすり】を 飲む。",3,true],
+
+  ["由","ゆう","じ【ゆう】に 書く。",3,true],["油","あぶら","【あぶら】で いためる。",3,true],["有","ゆう","【ゆう】めいな 山。",3,true],["遊","あそ","こうえんで 【あそ】ぶ。",3,true],
+
+  ["予","よ","【よ】ていを 見る。",3,false],["羊","ひつじ","しろい 【ひつじ】。",3,false],["洋","よう","【よう】ふくを 買う。",3,false],["葉","は","木の 【は】が おちる。",3,true],
+
+  ["陽","よう","たい【よう】が のぼる。",3,true],["様","さま","王【さま】の おしろ。",3,true],["落","お","はっぱが 【お】ちる。",3,false],["流","なが","川が 【なが】れる。",3,false],
+
+  ["旅","たび","【たび】に 出る。",3,false],["両","りょう","【りょう】手を あげる。",3,false],["緑","みどり","【みどり】いろの 草。",3,true],["礼","れい","お【れい】を 言う。",3,true],
+
+  ["列","れつ","一【れつ】に ならぶ。",3,false],["練","れん","【れん】しゅうを する。",3,true],["路","ろ","どう【ろ】を 歩く。",3,false],["和","わ","【わ】ふうの へや。",3,false],
+
+  // --- 4年生 前半101字 (愛〜松) ---
+
+  ["愛","あい","【あい】じょうを こめて 育てる。",4,false],["案","あん","いい 【あん】を 考える。",4,false],["以","い","五じ 【い】上に 起きる。",4,true],["衣","い","【い】ふくを きがえる。",4,true],
+
+  ["位","い","一【い】に なる。",4,false],["茨","いばら","【いばら】き県へ 行く。",4,false],["印","いん","だいじな ところに 【いん】を おす。",4,true],["井","い","ふく【い】県の ながめ。",4,true],
+
+  ["英","えい","【えい】語の べんきょう。",4,false],["栄","えい","【えい】ようを とる。",4,false],["媛","え","【え】ひめ県の みかん。",4,false],["塩","しお","【しお】を 少し 入れる。",4,false],
+
+  ["岡","おか","しず【おか】県の お茶。",4,false],["億","おく","一【おく】円の ゆめ。",4,false],["沖","おき","【おき】なわ県の 青い 海。",4,false],["加","か","なかまに 【か】わる。",4,false],
+
+  ["果","か","くだものを 【か】じゅ園で とる。",4,false],["貨","か","【か】もつ列車が 走る。",4,false],["課","か","【か】だいに とりくむ。",4,false],["芽","め","たねから 【め】が 出る。",4,false],
+
+  ["賀","が","さ【が】県の おまつり。",4,false],["改","かい","【かい】さつ口を とおる。",4,false],["械","かい","き【かい】を つかう。",4,false],["害","がい","たいふうの ひ【がい】。",4,false],
+
+  ["街","がい","しょうてん【がい】を 歩く。",4,false],["各","かく","【かく】じで じゅんびする。",4,false],["覚","おぼ","かん字を 【おぼ】える。",4,false],["潟","がた","にい【がた】県の お米。",4,false],
+
+  ["完","かん","【かん】ぜんに できあがる。",4,false],["官","かん","けいさつ【かん】の 仕事。",4,true],["管","かん","水道【かん】を なおす。",4,false],["関","かん","【かん】けいを 調べる。",4,false],
+
+  ["観","かん","【かん】さつ日記を 書く。",4,false],["願","ねが","ほしに 【ねが】いを こめる。",4,false],["希","き","【き】ぼうを 持つ。",4,true],["季","き","【き】せつの 変わり目。",4,false],
+
+  ["旗","はた","しろい 【はた】を ふって おうえんする。",4,true],["器","うつわ","りょうりを 【うつわ】に もる。",4,true],["機","き","ひこう【き】に のる。",4,false],["議","ぎ","学きゅう【ぎ】を ひらく。",4,false],
+
+  ["岐","ぎ","【ぎ】ふ県の 山々。",4,false],["求","もと","たすけを 【もと】める。",4,false],["泣","な","かなしくて 【な】く。",4,false],["給","きゅう","【きゅう】食を 食べる。",4,false],
+
+  ["挙","あ","手を 【あ】げる。",4,true],["漁","ぎょ","【ぎょ】こうで 魚を おろす。",4,false],["共","とも","友だちと 【とも】に 学ぶ。",4,false],["協","きょう","みんなで 【きょう】力する。",4,false],
+
+  ["鏡","かがみ","【かがみ】で かおを 見る。",4,false],["競","きょう","【きょう】そうして 走る。",4,false],["極","きょく","北【きょく】の 海。",4,false],["熊","くま","【くま】もと県の おしろ。",4,false],
+
+  ["訓","くん","かん字の 【くん】読み。",4,false],["軍","ぐん","【ぐん】てを はめて 働く。",4,false],["郡","ぐん","まちや 【ぐん】の 地図。",4,false],["群","ぐん","【ぐん】ま県の 高い 山。",4,false],
+
+  ["径","けい","円の 直【けい】を はかる。",4,false],["景","けし","きれいな 【けし】きを 見る。",4,false],["芸","げい","学【げい】会で うたう。",4,false],["欠","けつ","【けつ】せきの れんらく。",4,false],
+
+  ["結","むす","くつひもを 【むす】ぶ。",4,false],["建","た","新しい 家を 【た】てる。",4,true],["健","けん","【けん】こうに 気をつける。",4,true],["験","けん","りかの 実【けん】を する。",4,false],
+
+  ["固","かた","こおりが 【かた】まる。",4,false],["功","こう","せい【こう】を いわう。",4,false],["好","す","【す】きな 食べ物。",4,false],["香","か","【か】がわ県の うどん。",4,false],
+
+  ["候","こう","気【こう】が あたたかい。",4,false],["康","こう","けん【こう】第一。",4,false],["差","さ","【さ】が つく。",4,false],["菜","さい","や【さい】を たくさん 食べる。",4,false],
+
+  ["最","さい","【さい】ごまで あきらめない。",4,false],["材","ざい","りょうりの 【ざい】りょう。",4,false],["昨","さく","【さく】日の できごと。",4,false],["札","さつ","千円【さつ】を つかう。",4,false],
+
+  ["刷","さつ","本を いん【さつ】する。",4,false],["察","さつ","こん虫を かん【さつ】する。",4,false],["佐","さ","【さ】が県の 焼きもの。",4,true],["埼","さい","【さい】たま県の 公園。",4,false],
+
+  ["崎","さき","なが【さき】県の みなと。",4,false],["参","さん","【さん】かん日に 父母が 来る。",4,false],["産","さん","おみやげの とく【さん】品。",4,false],["散","さん","こうえんを 【さん】ぽする。",4,false],
+
+  ["残","のこ","ごはんを 【のこ】さず 食べる。",4,false],["氏","し","【し】名を 大きく 書く。",4,true],["司","し","会の 【し】かいを する。",4,true],["試","し","【し】あいに 出る。",4,false],
+
+  ["児","じ","【じ】どう館で あそぶ。",4,true],["治","なお","かぜが 【なお】る。",4,false],["辞","じ","国語【じ】てんを ひく。",4,false],["鹿","か","【か】ごしま県の さくらじま。",4,true],
+
+  ["滋","し","【し】が県の びわ湖。",4,false],["失","しつ","【しつ】れいの ないように する。",4,true],["借","か","図書室で 本を 【か】りる。",4,false],["種","たね","あさがおの 【たね】を まく。",4,false],
+
+  ["周","まわ","池の 【まわ】りを 走る。",4,false],["祝","いわ","たんじょう日を 【いわ】う。",4,false],["順","じゅん","【じゅん】ばんを まもる。",4,false],["初","はじ","【はじ】めて 自転車に のる。",4,true],
+
+  ["松","まつ","みどりの 【まつ】の木。",4,false],
+
+  // --- 4年生 後半101字 (城〜録) ---
+
+  ["城","しろ","大きな お【しろ】を 見る。",4,true],["笑","わら","友だちと 【わら】う。",4,false],["唱","しょう","合【しょう】の れんしゅう。",4,false],["焼","や","パンを 【や】く。",4,false],
+
+  ["照","て","たいようが 【て】らす。",4,false],["賞","しょう","【しょう】じょうを もらう。",4,false],["臣","しん","大【しん】になる。",4,true],["信","しん","【しん】ごうを まもる。",4,false],
+
+  ["省","はぶ","むだな ことを 【はぶ】く。",4,false],["清","きよ","【きよ】らかな 川の水。",4,false],["静","しず","図書室では 【しず】かに する。",4,false],["席","せき","じぶんの 【せき】に つく。",4,false],
+
+  ["積","つ","つみ木を 【つ】む。",4,false],["折","お","おり紙を 【お】る。",4,true],["節","せつ","き【せつ】の ぎょうじ。",4,false],["説","せつ","【せつ】めいを よく 聞く。",4,false],
+
+  ["浅","あさ","【あさ】い プールで およぐ。",4,false],["戦","たたか","しあいで 全力で 【たたか】う。",4,false],["選","えら","すきな 本を 【えら】ぶ。",4,false],["然","ぜん","し【ぜん】を 大切にする。",4,false],
+
+  ["争","あらそ","ボールを 【あらそ】う。",4,false],["倉","そう","【そう】こに しまう。",4,false],["巣","す","とりの 【す】を 見つける。",4,false],["束","たば","花【たば】を おくる。",4,false],
+
+  ["側","がわ","みぎ【がわ】を 歩く。",4,false],["続","つづ","あめが 【つづ】く。",4,false],["卒","そつ","小学校を 【そつ】ぎょうする。",4,false],["孫","まご","おじいさんの 【まご】。",4,false],
+
+  ["帯","おび","きものの 【おび】を しめる。",4,false],["隊","たい","おうえん【たい】の 声。",4,false],["達","たつ","手紙を はい【たつ】する。",4,false],["単","たん","かん【たん】な もんだい。",4,false],
+
+  ["置","お","つくえの 上に 本を 【お】く。",4,false],["仲","なか","【なか】よく あそぶ。",4,false],["兆","ちょう","一【ちょう】という 大きな 数。",4,true],["低","ひく","【ひく】い つくえ。",4,false],
+
+  ["底","そこ","いけの 【そこ】が 見える。",4,false],["的","てき","もく【てき】地に つく。",4,false],["典","てん","国語じ【てん】を 使う。",4,false],["伝","つた","気持ちを 【つた】える。",4,false],
+
+  ["徒","と","生【と】会に 入る。",4,false],["努","ど","【ど】力して れんしゅうする。",4,false],["灯","とう","でん【とう】を つける。",4,false],["堂","どう","食【どう】で ごはんを 食べる。",4,false],
+
+  ["働","はたら","おみせで 【はたら】く。",4,false],["特","とく","【とく】べつな 日。",4,false],["得","とく","【とく】点を 入れる。",4,false],["毒","どく","【どく】のある きのこ。",4,false],
+
+  ["奈","な","【な】ら県の しか。",4,false],["熱","ねつ","【ねつ】を はかる。",4,false],["念","ねん","【ねん】のため たしかめる。",4,false],["敗","はい","しっ【はい】から 学ぶ。",4,false],
+
+  ["梅","うめ","【うめ】の花が さく。",4,false],["博","はく","【はく】ぶつ館へ 行く。",4,false],["阪","さか","おお【さか】府へ 行く。",4,false],["飯","はん","あさご【はん】を 食べる。",4,false],
+
+  ["飛","と","空を 【と】ぶ。",4,true],["必","かなら","【かなら】ず やりとげる。",4,true],["票","ひょう","とう【ひょう】する。",4,false],["標","ひょう","もく【ひょう】を きめる。",4,false],
+
+  ["不","ふ","【ふ】しぎな お話。",4,false],["夫","ふう","く【ふう】して 作る。",4,false],["付","つ","なまえを 【つ】ける。",4,false],["府","ふ","きょうと【ふ】へ 行く。",4,false],
+
+  ["阜","ふ","ぎ【ふ】県を たずねる。",4,false],["富","ふ","【ふ】じ山に のぼる。",4,false],["副","ふく","【ふく】リーダーに なる。",4,false],["兵","へい","【へい】たいの お話。",4,false],
+
+  ["別","べつ","【べつ】の やり方を 考える。",4,false],["辺","へん","この 【へん】で あそぶ。",4,true],["変","か","いろが 【か】わる。",4,false],["便","べん","【べん】りな どうぐ。",4,false],
+
+  ["包","つつ","かみを 【つつ】む。",4,true],["法","ほう","【ほう】ほうを 調べる。",4,false],["望","のぞ","【のぞ】みが かなう。",4,false],["牧","ぼく","【ぼく】じょうの うし。",4,false],
+
+  ["末","まつ","学き【まつ】テスト。",4,true],["満","まん","【まん】てんを とる。",4,false],["未","み","【み】らいの ゆめ。",4,true],["民","みん","こく【みん】の 祝日。",4,false],
+
+  ["脈","みゃく","【みゃく】を はかる。",4,false],["約","やく","【やく】そくを まもる。",4,false],["勇","ゆう","【ゆう】気を 出す。",4,false],["要","よう","ひつ【よう】な もの。",4,false],
+
+  ["養","よう","えい【よう】を とる。",4,false],["浴","あ","みずを 【あ】びる。",4,false],["梨","なし","やま【なし】県の ぶどう。",4,false],["利","り","べん【り】な 道具。",4,false],
+
+  ["陸","りく","【りく】じょうの せんしゅ。",4,false],["良","よ","【よ】い 考えが うかぶ。",4,true],["料","りょう","【りょう】りを 作る。",4,false],["量","りょう","水の 【りょう】を はかる。",4,false],
+
+  ["輪","わ","【わ】に なって おどる。",4,false],["類","るい","しゅ【るい】を 分ける。",4,false],["令","れい","めい【れい】を きく。",4,true],["冷","つめ","【つめ】たい 水。",4,false],
+
+  ["例","れい","【れい】を あげる。",4,false],["連","つ","いぬを 【つ】れて 歩く。",4,false],["老","ろう","【ろう】じんホームを たずねる。",4,false],["労","ろう","く【ろう】して 作る。",4,false],
+
+  ["録","ろく","き【ろく】を のこす。",4,false],
+
+  // --- 5年生 前半97字 (圧〜授) ---
+
+  ["圧","あつ","水【あつ】を はかる。",5,true],["囲","かこ","まわりを 【かこ】む。",5,true],["移","うつ","せきを 【うつ】す。",5,false],["因","いん","げん【いん】を しらべる。",5,true],
+
+  ["永","えい","【えい】えんに つづく。",5,true],["営","えい","みせを 【えい】ぎょうする。",5,false],["衛","えい","【えい】せいに 気をつける。",5,true],["易","えき","ぼう【えき】で 品物を 買う。",5,false],
+
+  ["益","えき","り【えき】が 出る。",5,false],["液","えき","【えき】たいが こぼれる。",5,false],["演","えん","げきを 【えん】じる。",5,false],["応","おう","【おう】えんに 行く。",5,true],
+
+  ["往","おう","【おう】ふくの きっぷを 買う。",5,true],["桜","さくら","【さくら】の 花が 満開になる。",5,false],["恩","おん","【おん】がえしを する。",5,false],["可","か","【か】のうせいを 信じる。",5,true],
+
+  ["仮","かり","【かり】の 計画を たてる。",5,false],["価","か","ねだんの 【か】ちを 考える。",5,false],["河","かわ","大きな 【かわ】が 流れる。",5,false],["過","す","じかんが 【す】ぎる。",5,false],
+
+  ["快","かい","【かい】てきに すごす。",5,false],["解","と","もんだいを 【と】く。",5,false],["格","かく","【かく】べつな おいしさ。",5,false],["確","たし","こたえを 【たし】かめる。",5,false],
+
+  ["額","がく","ぜん【がく】を しはらう。",5,false],["刊","かん","ちょう【かん】の 新聞を 読む。",5,true],["幹","みき","木の 【みき】が 太い。",5,false],["慣","な","新しい 学校に 【な】れる。",5,false],
+
+  ["眼","がん","【がん】かで 目を みてもらう。",5,false],["紀","き","二十一せい【き】の 未来。",5,false],["基","もと","【もと】づく データを 集める。",5,false],["寄","よ","図書館に 【よ】る。",5,false],
+
+  ["規","き","【き】そくを まもる。",5,false],["喜","よろこ","みんなが 【よろこ】ぶ。",5,false],["技","わざ","あざやかな 【わざ】を 決める。",5,false],["義","ぎ","せい【ぎ】の ヒーロー。",5,false],
+
+  ["逆","ぎゃく","【ぎゃく】の ほうこうへ 進む。",5,true],["久","ひさ","【ひさ】しぶりに 会う。",5,true],["旧","きゅう","【きゅう】友と 再会する。",5,true],["救","すく","いのちを 【すく】う。",5,false],
+
+  ["居","い","いつも 【い】る 場所。",5,false],["許","ゆる","まちがいを 【ゆる】す。",5,false],["境","さかい","県と 県の 【さかい】。",5,false],["均","きん","【きん】とうに 分ける。",5,false],
+
+  ["禁","きん","ろうかを 走るのは 【きん】し。",5,false],["句","く","はい【く】を 作る。",5,true],["型","かた","【かた】に はめて 作る。",5,false],["経","けい","【けい】けんを つむ。",5,false],
+
+  ["潔","けつ","せい【けつ】に たもつ。",5,false],["件","けん","だいじな 【けん】を 話す。",5,false],["券","けん","電車の じょうしゃ【けん】。",5,false],["険","けん","き【けん】な ばしょ。",5,false],
+
+  ["検","けん","【けん】さを うける。",5,false],["限","かぎ","じかんに 【かぎ】りが ある。",5,false],["現","あらわ","ほしが 【あらわ】れる。",5,false],["減","へ","かずが 【へ】る。",5,false],
+
+  ["故","こ","じ【こ】に 気をつける。",5,false],["個","こ","りんごを 三【こ】 買う。",5,false],["護","ご","しぜんを ほ【ご】する。",5,false],["効","こう","くすりの 【こう】かが 出る。",5,false],
+
+  ["厚","あつ","【あつ】い 本を 読む。",5,false],["耕","たがや","はたけを 【たがや】す。",5,false],["航","こう","【こう】くう便で おくる。",5,false],["鉱","こう","【こう】山で ほり出す。",5,false],
+
+  ["構","かま","カメラを 【かま】える。",5,false],["興","きょう","【きょう】みを 持つ。",5,true],["講","こう","【こう】堂に 集まる。",5,false],["告","つ","けっかを 【つ】げる。",5,false],
+
+  ["混","ま","いろが 【ま】ざる。",5,false],["査","さ","ちょう【さ】を する。",5,false],["再","ふたた","【ふたた】び ちょうせんする。",5,true],["災","さい","しぜん【さい】がいに そなえる。",5,true],
+
+  ["妻","つま","おっとと 【つま】。",5,true],["採","と","きのみを 【と】る。",5,false],["際","さい","こく【さい】こうりゅうを する。",5,false],["在","ざい","【ざい】りょうを そろえる。",5,true],
+
+  ["財","ざい","ぶんか【ざい】を まもる。",5,false],["罪","つみ","【つみ】を みとめる。",5,false],["殺","さつ","【さつ】むしの スプレー。",5,false],["雑","ざつ","【ざつ】しを 読む。",5,false],
+
+  ["酸","さん","【さん】そを すう。",5,false],["賛","さん","意見に 【さん】せいする。",5,false],["士","し","べんご【し】に なる。",5,true],["支","ささ","みんなを 【ささ】える。",5,false],
+
+  ["史","し","れき【し】を 調べる。",5,true],["志","こころざし","高い 【こころざし】を 持つ。",5,false],["枝","えだ","木の 【えだ】が のびる。",5,false],["師","し","きょう【し】に なる。",5,true],
+
+  ["資","し","【し】りょうを 集める。",5,false],["飼","か","いぬを 【か】う。",5,false],["示","しめ","てほんを 【しめ】す。",5,false],["似","に","かおが 【に】ている。",5,false],
+
+  ["識","しき","ち【しき】を ふやす。",5,false],["質","しつ","【しつ】もんに 答える。",5,false],["舎","しゃ","こう【しゃ】の まえ。",5,false],["謝","あやま","すなおに 【あやま】る。",5,false],
+
+  ["授","じゅ","【じゅ】ぎょうを うける。",5,false],
+
+  // --- 5年生 後半96字 (収〜領) ---
+
+  ["収","しゅう","【しゅう】かくの 秋を むかえる。",5,false],["修","しゅう","【しゅう】りして 使う。",5,false],["衆","しゅう","公【しゅう】電話を 使う。",5,false],["従","じゅう","きそくに 【したが】う。",5,false],
+
+  ["縦","じゅう","【たて】と よこを はかる。",5,true],["述","じゅつ","意見を 【の】べる。",5,true],["準","じゅん","【じゅん】びを ととのえる。",5,false],["序","じょ","じゅん【じょ】よく ならぶ。",5,false],
+
+  ["承","しょう","【しょう】ちしましたと 返事する。",5,true],["招","しょう","友だちを 【まね】く。",5,false],["証","しょう","【しょう】めいしょを 見せる。",5,false],["象","しょう","【ぞう】の 長い はな。",5,true],
+
+  ["常","じょう","日【じょう】の せいかつ。",5,false],["情","じょう","【じょう】ほうを 集める。",5,false],["状","じょう","年が【じょう】を 書く。",5,true],["織","しょく","【おり】ものを 作る。",5,false],
+
+  ["職","しょく","【しょく】ぎょうを 調べる。",5,false],["制","せい","【せい】ふくを 着る。",5,true],["性","せい","【せい】かくが 明るい。",5,false],["政","せい","【せい】じの ニュース。",5,false],
+
+  ["勢","せい","【いきお】いよく 走る。",5,false],["精","せい","【せい】いっぱいがんばる。",5,false],["製","せい","日本【せい】の どうぐ。",5,false],["税","ぜい","しょうひ【ぜい】を はらう。",5,false],
+
+  ["責","せき","【せき】にんを はたす。",5,false],["績","せき","せい【せき】が 上がる。",5,false],["接","せつ","直【せつ】 会って 話す。",5,false],["設","せつ","建【せつ】の こうじ。",5,false],
+
+  ["絶","ぜつ","【ぜっ】たいに あきらめない。",5,false],["祖","そ","【そ】せんを 大切にする。",5,false],["素","そ","【す】なおな 心。",5,false],["総","そう","【そう】ごうの 学習。",5,false],
+
+  ["造","ぞう","【ぞう】せんじょの 船。",5,true],["像","ぞう","どう【ぞう】を 見る。",5,false],["増","ぞう","かずが 【ふ】える。",5,false],["則","そく","き【そく】を まもる。",5,false],
+
+  ["測","そく","長さを 【はか】る。",5,false],["属","ぞく","きん【ぞく】を 集める。",5,false],["率","りつ","かく【りつ】を 求める。",5,true],["損","そん","【そん】がいを ふせぐ。",5,false],
+
+  ["貸","たい","本を 【か】す。",5,false],["態","たい","じょう【たい】を たしかめる。",5,false],["団","だん","おうえん【だん】の 声。",5,false],["断","だん","【だん】ねんせずに つづける。",5,true],
+
+  ["築","ちく","新しい 家を 【きず】く。",5,false],["貯","ちょ","おこづかいを 【ちょ】きんする。",5,false],["張","ちょう","しゅ【ちょう】を 伝える。",5,false],["停","てい","【てい】しゃする 電車。",5,false],
+
+  ["提","てい","しゅくだいを 【てい】しゅつする。",5,false],["程","てい","【てい】どを しらべる。",5,false],["適","てき","【てき】せつな 言葉。",5,true],["統","とう","でん【とう】を まもる。",5,false],
+
+  ["銅","どう","【どう】メダルを とる。",5,false],["導","どう","し【どう】を うける。",5,true],["徳","とく","どう【とく】の じゅぎょう。",5,true],["独","どく","【ひと】りで 考える。",5,false],
+
+  ["任","にん","せき【にん】を 持つ。",5,false],["燃","ねん","火が 【も】える。",5,false],["能","のう","か【のう】せいを 信じる。",5,true],["破","は","かみが 【やぶ】れる。",5,false],
+
+  ["犯","はん","【はん】にんを さがす。",5,false],["判","はん","【はん】だんする。",5,false],["版","はん","【はん】がを 作る。",5,false],["比","ひ","大きさを 【くら】べる。",5,true],
+
+  ["肥","ひ","【ひ】りょうを やる。",5,false],["非","ひ","【ひ】じょうぐちを たしかめる。",5,true],["費","ひ","【ひ】ようが かかる。",5,false],["備","び","じゅん【び】を する。",5,false],
+
+  ["評","ひょう","【ひょう】ばんが よい。",5,false],["貧","ひん","【まず】しい くらし。",5,false],["布","ふ","【ぬの】を 切る。",5,true],["婦","ふ","しゅ【ふ】の 仕事。",5,false],
+
+  ["武","ぶ","【ぶ】どうを 習う。",5,true],["復","ふく","【ふく】しゅうを する。",5,false],["複","ふく","【ふく】ざつな 形。",5,false],["仏","ぶつ","【ぶつ】ぞうを 見る。",5,false],
+
+  ["粉","ふん","こむぎ【こ】を ふるう。",5,false],["編","へん","セーターを 【あ】む。",5,false],["弁","べん","お【べん】とうを 食べる。",5,false],["保","ほ","あんぜんを 【たも】つ。",5,false],
+
+  ["墓","ぼ","お【はか】まいりに 行く。",5,false],["報","ほう","てんきよ【ほう】を 見る。",5,false],["豊","ほう","【ゆた】かな しぜん。",5,false],["防","ぼう","かじを 【ふせ】ぐ。",5,false],
+
+  ["貿","ぼう","【ぼう】えきを する。",5,false],["暴","ぼう","【あば】れる 風。",5,false],["務","む","じ【む】しつへ 行く。",5,false],["夢","む","たのしい 【ゆめ】を 見る。",5,false],
+
+  ["迷","めい","みちに 【まよ】う。",5,true],["綿","めん","【わた】の 花が さく。",5,false],["輸","ゆ","【ゆ】にゅうする 品物。",5,false],["余","よ","じかんが 【あま】る。",5,false],
+
+  ["容","よう","ない【よう】を たしかめる。",5,false],["略","りゃく","【りゃく】して 書く。",5,false],["留","りゅう","【りゅう】すばんを する。",5,true],["領","りょう","だいとう【りょう】の 話。",5,false],
+
+  // --- 6年生 前半96字 (胃〜宣) ---
+
+  ["胃","い","【い】の ちょうしを 整える。",6,false],["異","こと","【こと】なる 意見を 聞く。",6,false],["遺","い","自然の 【い】産を 守る。",6,false],["域","いき","地【いき】の ぎょうじに 参加する。",6,false],
+
+  ["宇","う","【う】ちゅうの ひみつを 調べる。",6,false],["映","えい","【えい】がを 見る。",6,false],["延","えん","じかんを 【えん】ちょうする。",6,true],["沿","えん","川に 【そ】って 歩く。",6,false],
+
+  ["我","が","【われ】われの チーム。",6,true],["灰","はい","【はい】いろの くもが 広がる。",6,false],["拡","かく","【かく】だいして 見る。",6,false],["革","かく","【かわ】ぐつを みがく。",6,false],
+
+  ["閣","かく","ない【かく】の しくみ。",6,false],["割","わり","【わり】あいを 計算する。",6,false],["株","かぶ","花の 【かぶ】を 植える。",6,false],["干","ほ","せんたくものを 【ほ】す。",6,true],
+
+  ["巻","ま","まきものを 【ま】く。",6,true],["看","かん","【かん】ばんを 見る。",6,true],["簡","かん","【かん】たんな 問題。",6,false],["危","あぶ","【あぶ】ない 場所に 近づかない。",6,false],
+
+  ["机","つくえ","【つくえ】の 上を 整理する。",6,false],["揮","き","力を はっ【き】する。",6,false],["貴","き","【き】ちょうな 体験。",6,false],["疑","ぎ","【ぎ】もんを 解決する。",6,true],
+
+  ["吸","す","しんせんな 空気を 【す】う。",6,false],["供","きょう","しりょうを てい【きょう】する。",6,false],["胸","むね","【むね】を はって 歩く。",6,false],["郷","きょう","【きょう】土の 歴史を 学ぶ。",6,false],
+
+  ["勤","つと","会社に 【つと】める。",6,false],["筋","きん","【きん】にくを きたえる。",6,false],["系","けい","たいよう【けい】の ほし。",6,true],["敬","けい","【けい】語を 正しく 使う。",6,false],
+
+  ["警","けい","【けい】さつかんが パトロールする。",6,false],["劇","げき","学芸会で 【げき】を する。",6,false],["激","げき","【はげ】しい 雨が ふる。",6,false],["穴","あな","じめんに 【あな】を ほる。",6,false],
+
+  ["絹","きぬ","【きぬ】の おりもの。",6,false],["権","けん","人【けん】を 大切にする。",6,false],["憲","けん","【けん】ぽうを 学ぶ。",6,false],["源","みなもと","川の 【みなもと】を たどる。",6,false],
+
+  ["厳","きび","【きび】しい 練習に たえる。",6,false],["己","じ","【じ】こ しょうかいを する。",6,true],["呼","よ","大きな 声で 【よ】ぶ。",6,false],["誤","あやま","【あやま】りを 直す。",6,false],
+
+  ["后","こう","【こう】ごうさまの お話。",6,true],["孝","こう","おや【こう】こうを する。",6,false],["皇","こう","【こう】居の まわりを 歩く。",6,false],["紅","べに","【べに】いろの 花が さく。",6,false],
+
+  ["降","ふ","雪が 【ふ】りつもる。",6,false],["鋼","こう","【こう】てつの 橋。",6,false],["刻","きざ","やさいを こまかく 【きざ】む。",6,false],["穀","こく","【こく】もつを 育てる。",6,false],
+
+  ["骨","ほね","じょうぶな 【ほね】を 作る。",6,false],["困","こま","【こま】っている 人を 助ける。",6,false],["砂","すな","【すな】はまで あそぶ。",6,false],["座","すわ","いすに 【すわ】る。",6,true],
+
+  ["済","す","ようじを 【す】ませる。",6,false],["裁","さい","【さい】ほうの どうぐ。",6,true],["策","さく","たい【さく】を 考える。",6,false],["冊","さつ","本を 三【さつ】 読む。",6,true],
+
+  ["蚕","かいこ","【かいこ】が まゆを 作る。",6,false],["至","いた","ちょうじょうに 【いた】る。",6,true],["私","わたし","【わたし】の ゆめ。",6,false],["姿","すがた","美しい 【すがた】。",6,false],
+
+  ["視","し","【し】力を はかる。",6,false],["詞","し","名【し】や どうしを 学ぶ。",6,false],["誌","し","ざっ【し】を 読む。",6,false],["磁","じ","【じ】しゃくの せいしつ。",6,false],
+
+  ["射","しゃ","はん【しゃ】する 光。",6,true],["捨","す","ごみを 【す】てる。",6,false],["尺","しゃく","【しゃく】どを はかる。",6,false],["若","わか","【わか】い 力が かつやくする。",6,false],
+
+  ["樹","じゅ","【じゅ】もくを 植える。",6,false],["宗","しゅう","【しゅう】きょうの 歴史。",6,false],["就","つ","しごとに 【つ】く。",6,false],["縮","ちぢ","せんたくものが 【ちぢ】む。",6,false],
+
+  ["熟","じゅく","【じゅく】語を 調べる。",6,false],["純","じゅん","【じゅん】すいな 気持ち。",6,false],["処","しょ","ごみを 【しょ】りする。",6,true],["署","しょ","けいさつ【しょ】へ 行く。",6,false],
+
+  ["諸","しょ","【しょ】外国の 文化。",6,false],["除","のぞ","ごみを とり【のぞ】く。",6,false],["術","じゅつ","び【じゅつ】館で 絵を 見る。",6,false],["将","しょう","【しょう】らいの ゆめ。",6,true],
+
+  ["傷","きず","【きず】ぐちを あらう。",6,false],["障","しょう","【しょう】がい物を よける。",6,false],["蒸","む","いもを 【む】す。",6,false],["針","はり","とけいの 【はり】。",6,false],
+
+  ["仁","じん","【じん】ぎを 守る。",6,false],["垂","た","しずくが 【た】れる。",6,true],["推","すい","【すい】せんする。",6,false],["寸","すん","一【すん】ぼうし。",6,false],
+
+  ["盛","もり","【もり】あがる 試合。",6,false],["聖","せい","【せい】とく太子。",6,false],["誠","せい","【せい】じつな たいど。",6,false],["宣","せん","【せん】げんする。",6,false],
+
+  // --- 6年生 後半95字 (専〜論) ---
+
+  ["専","せん","【せん】門の 知識を 深める。",6,false],["泉","いずみ","きれいな 【いずみ】の 水が わく。",6,false],["洗","あら","手を きれいに 【あら】う。",6,false],["染","そ","ぬのを あい色に 【そ】める。",6,false],
+
+  ["善","ぜん","【ぜん】力を つくして がんばる。",6,false],["舌","した","【した】で 味を たしかめる。",6,true],["銭","ぜに","こ【ぜに】を さいふに 入れる。",6,false],["奏","そう","えん【そう】会を 開く。",6,false],
+
+  ["窓","まど","【まど】を 開けて 空気を 入れる。",6,false],["創","そう","【そう】ぞう力を 働かせる。",6,false],["装","そう","【そう】びを ととのえる。",6,false],["層","そう","地【そう】の 観察を する。",6,false],
+
+  ["操","そう","たい【そう】の 練習を する。",6,false],["蔵","ぞう","れい【ぞう】こに しまう。",6,false],["臓","ぞう","心【ぞう】の 動きを 調べる。",6,false],["存","そん","【そん】ざいを たしかめる。",6,true],
+
+  ["尊","そん","【そん】けいする 人物。",6,false],["退","たい","【たい】じょうする じゅんばん。",6,false],["宅","たく","自【たく】で 勉強する。",6,false],["担","たん","【たん】にんの 先生に 話す。",6,false],
+
+  ["探","さが","たからものを 【さが】す。",6,false],["誕","たん","【たん】じょう日を お祝いする。",6,false],["段","だん","かい【だん】を 上がる。",6,false],["暖","あたた","【あたた】かい 部屋で すごす。",6,false],
+
+  ["値","ね","【ね】だんを くらべる。",6,false],["宙","ちゅう","う【ちゅう】飛行士に あこがれる。",6,false],["忠","ちゅう","【ちゅう】こくを よく 聞く。",6,false],["著","ちょ","【ちょ】名な 作家。",6,true],
+
+  ["庁","ちょう","県【ちょう】の 建物を 見学する。",6,false],["頂","ちょう","山の 【ちょう】じょうに 着く。",6,false],["潮","しお","【しお】の 満ち引きを 調べる。",6,false],["腸","ちょう","胃や 【ちょう】の 働きを 学ぶ。",6,false],
+
+  ["賃","ちん","うん【ちん】を はらう。",6,false],["痛","いた","おなかが 【いた】くなる。",6,false],["敵","てき","【てき】の チームと 戦う。",6,false],["展","てん","えの 【てん】らん会へ 行く。",6,false],
+
+  ["討","とう","【とう】ろん会を 開く。",6,false],["党","とう","せい【とう】の 考えを 聞く。",6,false],["糖","とう","さ【とう】を 少し 入れる。",6,false],["届","とど","てがみが 【とど】く。",6,false],
+
+  ["難","むずか","【むずか】しい 問題に 挑戦する。",6,false],["乳","にゅう","ぎゅう【にゅう】を 飲む。",6,false],["認","みと","努力を 【みと】める。",6,false],["納","なっ","【なっ】とくいくまで 考える。",6,false],
+
+  ["脳","のう","【のう】の 働きを 調べる。",6,false],["派","は","【は】手な 色の 洋服。",6,false],["拝","はい","じんじゃを 【はい】けんする。",6,true],["背","せ","【せ】の 高い 木。",6,true],
+
+  ["肺","はい","【はい】で 呼吸を する。",6,false],["俳","はい","【はい】くを 作る。",6,false],["班","はん","【はん】の 仲間と 協力する。",6,false],["晩","ばん","【ばん】ごはんを 食べる。",6,false],
+
+  ["否","ひ","【ひ】定せずに 話を 聞く。",6,false],["批","ひ","【ひ】はん的な 意見。",6,true],["秘","ひ","【ひ】みつを 守る。",6,true],["俵","たわら","お米の 入った 【たわら】。",6,false],
+
+  ["腹","はら","【はら】ぺこで 家に 帰る。",6,false],["奮","ふん","こう【ふん】して 眠れない。",6,false],["並","なら","一列に 【なら】ぶ。",6,true],["陛","へい","天皇【へい】かの お言葉。",6,false],
+
+  ["閉","し","まどを 【し】める。",6,false],["片","かた","【かた】方を 持つ。",6,true],["補","おぎな","足りない 部分を 【おぎな】う。",6,false],["暮","く","田舎で 【く】らす。",6,false],
+
+  ["宝","たから","【たから】ものを 大切にする。",6,false],["訪","たず","友だちの 家を 【たず】ねる。",6,false],["亡","な","ペットが 【な】くなる。",6,true],["忘","わす","宿題を 【わす】れないように する。",6,false],
+
+  ["棒","ぼう","てつ【ぼう】の 練習を する。",6,false],["枚","まい","紙を 三【まい】 配る。",6,false],["幕","まく","げきの 【まく】が 上がる。",6,false],["密","みつ","ひ【みつ】の 基地を 作る。",6,false],
+
+  ["無","む","【む】りな 計画は 立てない。",6,true],["盟","めい","同【めい】を 結ぶ。",6,false],["模","も","【も】はん演技を 見る。",6,false],["訳","わけ","りゆうや 【わけ】を 話す。",6,false],
+
+  ["郵","ゆう","【ゆう】びん局へ 行く。",6,false],["優","やさ","【やさ】しい 言葉を かける。",6,false],["預","あず","にもつを 【あず】ける。",6,false],["幼","おさな","【おさな】い ころの 思い出。",6,false],
+
+  ["欲","ほ","新しい 本が 【ほ】しい。",6,false],["翌","よく","【よく】日の 朝に 出発する。",6,false],["乱","みだ","列が 【みだ】れる。",6,true],["卵","たまご","にわとりの 【たまご】。",6,true],
+
+  ["覧","らん","てん【らん】会を 見る。",6,false],["裏","うら","紙の 【うら】に 書く。",6,false],["律","りつ","ほう【りつ】を 守る。",6,false],["臨","のぞ","試合に 【のぞ】む。",6,true],
+
+  ["朗","ろう","【ろう】どくの 練習を する。",6,false],["論","ろん","ぎ【ろん】を 深める。",6,false]
 ];
 
-let currentGrade = '1'; // '1'〜'6' または 'tricky'
-let setSize = 5;
-let questions = [];
-let currentIndex = 0;
-let results = [];
-let currentRefStrokes = [];
-let currentRawPaths = [];
-let isReviewMode = false;
+// 読みの自動補正：例文の【 】の中身を「よみがな」として使う（食い違い防止）  
+KANJI_DATA.forEach(function(it){  
+  var m = /【(.+?)】/.exec(it[2]);  
+  if (m) it[1] = m[1];  
+});
 
-const canvas = document.getElementById('drawCanvas');
-const ctx = canvas.getContext('2d');
-let isDrawing = false;
-let activePointerId = null;
-let userStrokes = [];
-let currentStroke = [];
-let isAnswered = false;
-let animTimer = null;
+// ---------- 安全な保存（Googleサイト埋め込みで localStorage が使えなくても止まらない） ----------  
+const safeStore = (function(){  
+  var mem = {}, ok = false;  
+  try { var k='__kanji_drill_test__'; localStorage.setItem(k,'1'); localStorage.removeItem(k); ok = true; } catch(e){}  
+  return {  
+    get persistent(){ return ok; },  
+    getItem: function(k){  
+      try { if (ok) return localStorage.getItem(k); } catch(e){ ok=false; }  
+      return Object.prototype.hasOwnProperty.call(mem,k) ? mem[k] : null;  
+    },  
+    setItem: function(k,v){  
+      try { if (ok) { localStorage.setItem(k,v); return; } } catch(e){ ok=false; }  
+      mem[k]=v;  
+    },  
+    keys: function(){  
+      try { if (ok) return Object.keys(localStorage); } catch(e){ ok=false; }  
+      return Object.keys(mem);  
+    },  
+    removeItem: function(k){  
+      try { if (ok) localStorage.removeItem(k); } catch(e){ ok=false; }  
+      delete mem[k];  
+    }  
+  };  
+})();
 
-// 学年別の画面表示テキスト（5・6年は漢字交じり表示）
-function isUpperGrade() {
-  return currentGrade === '5' || currentGrade === '6';
+// ---------- 状態 ----------  
+let currentGrade='1', setSize=5, questions=[], currentIndex=0, results=[];  
+let currentRefStrokes=[], currentRawPaths=[], isReviewMode=false, toastTimer=null;  
+let isDrawing=false, activePointerId=null, userStrokes=[], currentStroke=[], isAnswered=false, animTimer=null;  
+let loadToken=0;  
+const memCache = {};  
+const canvas = document.getElementById('drawCanvas');  
+const ctx = canvas.getContext('2d');  
+const $ = function(id){ return document.getElementById(id); };  
+const isUpper = function(){ return currentGrade==='5' || currentGrade==='6'; };
+
+function updateUILanguage(){  
+  var u=isUpper();  
+  $('appTitle').textContent = u ? '✏️ 小学生 手書き漢字ドリル' : '✏️ しょうがくせい てがきかんじドリル';  
+  $('btnSet5').textContent = u ? '1回 5問' : '1かい 5もん';  
+  $('btnSet10').textContent = u ? '1回 10問' : '1かい 10もん';  
+  $('readingLabel').textContent = u ? '読みがな' : 'よみがな';  
+  $('undoBtn').textContent = u ? '↩️ 1画もどる' : '↩️ 1かく もどる';  
+  $('clearBtn').textContent = u ? '🗑️ 全部消す' : '🗑️ ぜんぶ けす';  
+  $('checkBtn').textContent = u ? '⭕ 答え合わせ' : '⭕ こたえあわせ';  
+  $('replayBtn').textContent = u ? '▶️ 書き順を見る' : '▶️ かきじゅんを みる';  
+  $('restartBtn').textContent = u ? '🔄 もう一度挑戦する' : '🔄 もういちど ちょうせんする';  
+  renderRewardBar();  
+}  
+function showToast(msg){  
+  var t=$('toastMsg'); t.textContent=msg; t.style.display='block';  
+  if(toastTimer) clearTimeout(toastTimer);  
+  toastTimer=setTimeout(function(){ t.style.display='none'; },2600);  
+}  
+function hideToast(){ $('toastMsg').style.display='none'; if(toastTimer) clearTimeout(toastTimer); }
+
+function changeGrade(g,btn){  
+  currentGrade=g;  
+  document.querySelectorAll('.grade-btn').forEach(function(b){ b.classList.remove('active'); });  
+  if(btn) btn.classList.add('active');  
+  updateUILanguage(); startNewSet();  
+}  
+function changeSetSize(n,btn){  
+  setSize=n;  
+  document.querySelectorAll('.mode-btn').forEach(function(b){ b.classList.remove('active'); });  
+  if(btn) btn.classList.add('active');  
+  startNewSet();  
 }
 
-function updateUILanguage() {
-  const upper = isUpperGrade();
-  document.getElementById('appTitle').textContent = upper
-    ? '✏️ 小学生 手書き漢字ドリル'
-    : '✏️ しょうがくせい てがきかんじドリル';
-  document.getElementById('btnSet5').textContent = upper ? '1回 5問' : '1かい 5もん';
-  document.getElementById('btnSet10').textContent = upper ? '1回 10問' : '1かい 10もん';
-  document.getElementById('readingLabel').textContent = upper ? '読みがな' : 'よみがな';
-  document.getElementById('undoBtn').textContent = upper ? '↩️ 1画もどる' : '↩️ 1かく もどる';
-  document.getElementById('clearBtn').textContent = upper ? '🗑️ 全部消す' : '🗑️ ぜんぶ けす';
-  document.getElementById('checkBtn').textContent = upper ? '⭕ 答え合わせ' : '⭕ こたえあわせ';
-  document.getElementById('replayBtn').textContent = upper ? '▶️ 書き順を見る' : '▶️ かきじゅんを みる';
-  document.getElementById('restartBtn').textContent = upper ? '🔄 もう一度挑戦する' : '🔄 もういちど ちょうせんする';
+function startNewSet(custom){  
+  custom = Array.isArray(custom) ? custom : null;   // ボタンのclickイベントが渡されても無視する  
+  isReviewMode = !!custom; hideToast();  
+  if(custom){ questions = custom.slice(); }  
+  else {  
+    var pool = currentGrade==='tricky'  
+      ? KANJI_DATA.filter(function(i){ return i[4]===true; })  
+      : KANJI_DATA.filter(function(i){ return i[3]===Number(currentGrade); });  
+    if(pool.length===0){  
+      $('quizScreen').style.display='none'; $('resultScreen').style.display='none';var n=$('emptyNotice'); n.style.display='block'; n.textContent=currentGrade+'年生の漢字データは準備中です。';  
+      return;  
+    }  
+    questions = pool.slice().sort(function(){ return Math.random()-0.5; }).slice(0,Math.min(setSize,pool.length));  
+  }  
+  $('emptyNotice').style.display='none';  
+  currentIndex=0; results=[];  
+  $('resultScreen').style.display='none'; $('quizScreen').style.display='block';  
+  loadQuestion();  
+}  
+function startWrongReview(){  
+  var w=results.filter(function(r){ return !r.isCorrect; }).map(function(r){ return r.rawItem; });  
+  if(w.length) startNewSet(w);  
 }
 
-window.onload = () => {
-  setupCanvasEvents();
-  updateUILanguage();
-  startNewSet();
-};
-
-function changeGrade(grade, btn) {
-  currentGrade = grade;
-  document.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  updateUILanguage();
-  startNewSet();
-}
-
-function changeSetSize(size, btn) {
-  setSize = size;
-  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  startNewSet();
-}
-
-function startNewSet(customQuestions = null) {
-  isReviewMode = !!customQuestions;
-  const upper = isUpperGrade();
-
-  if (customQuestions) {
-    questions = [...customQuestions];
-  } else {
-    let pool = [];
-    if (currentGrade === 'tricky') {
-      pool = KANJI_DATA.filter(item => item[4] === true);
-    } else {
-      const gNum = Number(currentGrade);
-      pool = KANJI_DATA.filter(item => item[3] === gNum);
-    }
-
-    if (pool.length === 0) {
-      document.getElementById('quizScreen').style.display = 'none';
-      document.getElementById('resultScreen').style.display = 'none';
-      const notice = document.getElementById('emptyNotice');
-      notice.style.display = 'block';
-      notice.innerHTML = `${currentGrade}年生の漢字データは、次のステップで追加予定です！<br>今は「1ねん」「2ねん」「6年」「🔥 筆順とっくん」を試してみてください。`;
-      return;
-    }
-
-    const shuffled = [...pool].sort(() => Math.random() - 0.5);
-    questions = shuffled.slice(0, Math.min(setSize, shuffled.length));
-  }
-
-  document.getElementById('emptyNotice').style.display = 'none';
-  currentIndex = 0;
-  results = [];
-  document.getElementById('resultScreen').style.display = 'none';
-  document.getElementById('quizScreen').style.display = 'block';
-  loadQuestion();
-}
-
-function startWrongReview() {
-  const wrongItems = results.filter(r => !r.isCorrect).map(r => r.rawItem);
-  if (wrongItems.length > 0) {
-    startNewSet(wrongItems);
-  }
-}
-
-async function loadQuestion() {
-  isAnswered = false;
-  userStrokes = [];
-  currentStroke = [];
-  if (animTimer) clearInterval(animTimer);
-
-  const upper = isUpperGrade();
-  const q = questions[currentIndex];
-  const [kanji, reading, sentence, grade] = q;
-  const totalQ = questions.length;
-
-  document.getElementById('progressText').textContent = upper
-    ? `第 ${currentIndex + 1} 問 / ${totalQ} 問`
-    : `だい ${currentIndex + 1} もん / ${totalQ} もん`;
-
-  if (isReviewMode) {
-    document.getElementById('gradeBadge').textContent = upper ? '💪 まちがい復習中' : '💪 まちがい ふくしゅうちゅう';
-  } else if (currentGrade === 'tricky') {
-    document.getElementById('gradeBadge').textContent = `🔥 筆順とっくん（${grade}年）`;
-  } else {
-    document.getElementById('gradeBadge').textContent = upper ? `${grade}年生の漢字` : `${grade}ねんせいの かんじ`;
-  }
-
-  document.getElementById('readingText').textContent = reading;
-  const formattedSentence = sentence.replace(/【(.+?)】/, '<span class="target-blank">$1</span>');
-  document.getElementById('sentenceText').innerHTML = formattedSentence;
-
-  document.getElementById('feedbackBox').style.display = 'none';
-  document.getElementById('drawControls').style.display = 'flex';
-  document.getElementById('guideSvg').innerHTML = '';
-
-  const isLast = (currentIndex === totalQ - 1);
-  document.getElementById('nextBtn').textContent = isLast
-    ? (upper ? '結果を見る 🏆' : 'けっかを みる 🏆')
-    : (upper ? '次の問題へ ➡️' : 'つぎの もんだいへ ➡️');
-
+async function loadQuestion(){  
+  var token = ++loadToken;  
+  isAnswered=false; userStrokes=[]; currentStroke=[]; hideToast();  
+  if(animTimer) clearInterval(animTimer);  
+  var u=isUpper(), q=questions[currentIndex], total=questions.length;  
+  currentRefStrokes=[]; currentRawPaths=[];  
+  $('progressText').textContent = u ? '第 '+(currentIndex+1)+' 問 / '+total+' 問' : 'だい '+(currentIndex+1)+' もん / '+total+' もん';  
+  if(isReviewMode) $('gradeBadge').textContent = u ? '💪 まちがい復習中' : '💪 まちがい ふくしゅうちゅう';  
+  else if(currentGrade==='tricky') $('gradeBadge').textContent = '🔥 筆順とっくん（'+q[3]+'年）';  
+  else $('gradeBadge').textContent = u ? q[3]+'年生の漢字' : q[3]+'ねんせいの かんじ';  
+  $('readingText').textContent = q[1];  
+  $('sentenceText').innerHTML=q[2].replace(/【(.+?)】/,'<span class="target-blank">$1</span>');  
+  $('feedbackBox').style.display='none';  
+  $('drawControls').style.display='flex';  
+  $('guideSvg').innerHTML='';  
+  $('nextBtn').textContent = (currentIndex===total-1) ? (u?'結果を見る 🏆':'けっかを みる 🏆') : (u?'次の問題へ ➡️':'つぎの もんだいへ ➡️');  
   redrawCanvas();
 
-  document.getElementById('loadingMsg').style.display = 'block';
-  document.getElementById('checkBtn').disabled = true;
-  try {
-    const data = await fetchKanjiStrokes(kanji);
-    currentRefStrokes = data.sampledStrokes;
-    currentRawPaths = data.rawPaths;
-  } catch (e) {
-    console.error(e);
-    currentRefStrokes = [];
-    currentRawPaths = [];
-  }
-  document.getElementById('loadingMsg').style.display = 'none';
-  document.getElementById('checkBtn').disabled = false;
+  // 通信待ちでも「書く」ことはできる。答え合わせだけ読み込み完了を待つ  
+  $('loadingMsg').style.display='block';  
+  $('checkBtn').disabled=true;  
+  var data=null;  
+  try { data = await fetchKanjiStrokes(q[0]); } catch(e){ console.warn('お手本の取得に失敗:', e); }  
+  if(token!==loadToken) return;               // 別の問題に移っていたら捨てる  
+  currentRefStrokes = data ? data.sampledStrokes : [];  
+  currentRawPaths = data ? data.rawPaths : [];  
+  $('loadingMsg').style.display='none';  
+  $('checkBtn').disabled=false;
+
+  // 次の問題を先読み（待ち時間を減らす）  
+  var nx = questions[currentIndex+1];  
+  if(nx) fetchKanjiStrokes(nx[0]).catch(function(){});  
 }
 
-// KanjiVGからSVGを取得（localStorageキャッシュ対応＆StrokePaths厳密抽出）
-async function fetchKanjiStrokes(kanjiChar) {
-  const cacheKey = 'kvg_v2_' + kanjiChar;
-  try {
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-      return JSON.parse(cached);
-    }
-  } catch (e) {}
-
-  const hex = kanjiChar.codePointAt(0).toString(16).padStart(5, '0');
-  const url = `https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg@master/kanji/${hex}.svg`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('KanjiVG fetch failed');
-  const svgText = await res.text();
-
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgText, 'image/svg+xml');
-  let pathEls = doc.querySelectorAll('[id^="kvg:StrokePaths_"] path');
-  if (pathEls.length === 0) {
-    pathEls = doc.querySelectorAll('path');
-  }
-
-  const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  tempSvg.setAttribute('viewBox', '0 0 109 109');
-  tempSvg.style.position = 'absolute';
-  tempSvg.style.width = '0';
-  tempSvg.style.height = '0';
-  document.body.appendChild(tempSvg);
-
-  const sampledStrokes = [];
-  const rawPaths = [];
-  const steps = 15; // 16点サンプリングで「己」などの折れ曲がりも忠実に再現
-
-  pathEls.forEach(p => {
-    const d = p.getAttribute('d');
-    if (!d) return;
-    rawPaths.push(d);
-
-    const clone = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    clone.setAttribute('d', d);
-    tempSvg.appendChild(clone);
-
-    const len = clone.getTotalLength();
-    const pts = [];
-    for (let i = 0; i <= steps; i++) {
-      const pt = clone.getPointAtLength((len * i) / steps);
-      pts.push({ x: Math.round(pt.x * 10) / 10, y: Math.round(pt.y * 10) / 10 });
-    }
-    sampledStrokes.push(pts);
-  });
-
-  document.body.removeChild(tempSvg);
-
-  const resultData = { sampledStrokes, rawPaths };
-  try {
-    localStorage.setItem(cacheKey, JSON.stringify(resultData));
-  } catch (e) {}
-
-  return resultData;
+async function fetchOne(url){  
+  var c=new AbortController(), t=setTimeout(function(){ c.abort(); },6000);  
+  try {  
+    var r=await fetch(url,{signal:c.signal});  
+    if(!r.ok) throw new Error('HTTP '+r.status);  
+    return await r.text();  
+  } finally { clearTimeout(t); }  
 }
 
-// Chromebookのペン・タッチ操作に完全対応したPointer Events描画
-function setupCanvasEvents() {
-  const getPos = (e) => {
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: ((e.clientX - rect.left) / rect.width) * canvas.width,
-      y: ((e.clientY - rect.top) / rect.height) * canvas.height
-    };
-  };
+async function fetchKanjiStrokes(ch){  
+  if(memCache[ch]) return memCache[ch];  
+  var key='kvg_v2_'+ch;  
+  try { var c=safeStore.getItem(key); if(c){ var d=JSON.parse(c); memCache[ch]=d; return d; } } catch(e){}
 
-  canvas.addEventListener('pointerdown', (e) => {
-    if (isAnswered || isDrawing) return;
-    e.preventDefault();
-    isDrawing = true;
-    activePointerId = e.pointerId;
-    canvas.setPointerCapture(e.pointerId);
-    currentStroke = [getPos(e)];
-    redrawCanvas();
-  });
+  var hex=ch.codePointAt(0).toString(16).padStart(5,'0');  
+  var urls=[  
+    'https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg@master/kanji/'+hex+'.svg',  
+    'https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/'+hex+'.svg'  
+  ];  
+  var svgText=null, lastErr=null;  
+  for(var i=0;i<urls.length && !svgText;i++){  
+    try { svgText = await fetchOne(urls[i]); } catch(e){ lastErr=e; }  
+  }  
+  if(!svgText) throw lastErr || new Error('fetch failed');
 
-  canvas.addEventListener('pointermove', (e) => {
-    if (!isDrawing || e.pointerId !== activePointerId || isAnswered) return;
-    e.preventDefault();
-    currentStroke.push(getPos(e));
-    redrawCanvas();
-  });
+  var doc=new DOMParser().parseFromString(svgText,'image/svg+xml');  
+  var els=doc.querySelectorAll('[id^="kvg:StrokePaths_"] path');  
+  if(els.length===0) els=doc.querySelectorAll('path');
 
-  const finishStroke = (e) => {
-    if (!isDrawing || e.pointerId !== activePointerId) return;
-    isDrawing = false;
-    activePointerId = null;
-    try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
-    if (currentStroke.length > 1) {
-      userStrokes.push(currentStroke);
-    }
-    currentStroke = [];
-    redrawCanvas();
-  };
+  var tmp=document.createElementNS('http://www.w3.org/2000/svg','svg');  
+  tmp.setAttribute('viewBox','0 0 109 109');  
+  tmp.style.cssText='position:absolute;width:0;height:0;pointer-events:none';  
+  document.body.appendChild(tmp);  
+  var sampled=[], raw=[];  
+  try {  
+    els.forEach(function(p){  
+      var d=p.getAttribute('d'); if(!d) return;  
+      raw.push(d);  
+      var cl=document.createElementNS('http://www.w3.org/2000/svg','path');  
+      cl.setAttribute('d',d); tmp.appendChild(cl);  
+      var len=cl.getTotalLength(), pts=[];  
+      for(var k=0;k<=15;k++){ var pt=cl.getPointAtLength(len*k/15); pts.push({x:Math.round(pt.x*10)/10,y:Math.round(pt.y*10)/10}); }  
+      sampled.push(pts);  
+    });  
+  } finally { if(tmp.parentNode) tmp.parentNode.removeChild(tmp); }  
+  if(sampled.length===0) throw new Error('no strokes');
 
-  canvas.addEventListener('pointerup', finishStroke);
-  canvas.addEventListener('pointercancel', finishStroke);
+  var result={sampledStrokes:sampled,rawPaths:raw};  
+  memCache[ch]=result;  
+  try { safeStore.setItem(key,JSON.stringify(result)); } catch(e){}  
+  return result;  
 }
 
-function redrawCanvas(strokeColors = null) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+// ---------- 描画 ----------  
+function setupCanvasEvents(){  
+  function pos(e){  
+    var r=canvas.getBoundingClientRect(), w=r.width||canvas.width, h=r.height||canvas.height;  
+    return {x:Math.max(0,Math.min(canvas.width,(e.clientX-r.left)/w*canvas.width)), y:Math.max(0,Math.min(canvas.height,(e.clientY-r.top)/h*canvas.height))};  
+  }  
+  canvas.addEventListener('pointerdown',function(e){  
+    if(isAnswered||isDrawing) return;  
+    if(e.pointerType==='touch' && !e.isPrimary) return;  
+    e.preventDefault(); hideToast();  
+    isDrawing=true; activePointerId=e.pointerId;  
+    try{ canvas.setPointerCapture(e.pointerId); }catch(x){}  
+    currentStroke=[pos(e)]; redrawCanvas();  
+  });  
+  canvas.addEventListener('pointermove',function(e){  
+    if(!isDrawing||e.pointerId!==activePointerId||isAnswered) return;  
+    e.preventDefault(); currentStroke.push(pos(e)); redrawCanvas();  
+  });  
+  function finish(e){  
+    if(!isDrawing||e.pointerId!==activePointerId) return;  
+    isDrawing=false; activePointerId=null;  
+    try{ canvas.releasePointerCapture(e.pointerId); }catch(x){}  
+    if(currentStroke.length>1) userStrokes.push(currentStroke);  
+    else if(currentStroke.length===1) userStrokes.push([currentStroke[0],{x:currentStroke[0].x+.5,y:currentStroke[0].y+.5}]);  
+    currentStroke=[]; redrawCanvas();  
+  }  
+  canvas.addEventListener('pointerup',finish);  
+  canvas.addEventListener('pointercancel',finish);  
+}  
+function drawGrid(){  
+  var w=canvas.width,h=canvas.height;  
+  ctx.save(); ctx.strokeStyle='#c8e6c9'; ctx.lineWidth=1.5; ctx.setLineDash([6,6]);  
+  ctx.beginPath(); ctx.moveTo(w/2,0); ctx.lineTo(w/2,h); ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();  
+  ctx.restore();  
+}  
+function drawStroke(pts,color){  
+  if(!pts||!pts.length) return;  
+  ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=9; ctx.lineCap='round'; ctx.lineJoin='round';  
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);  
+  for(var i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y);  
+  ctx.stroke(); ctx.restore();  
+}  
+function redrawCanvas(colors){  
+  ctx.clearRect(0,0,canvas.width,canvas.height); drawGrid();  
+  userStrokes.forEach(function(s,i){ drawStroke(s,(colors&&colors[i])?colors[i]:'#263238'); });  
+  if(currentStroke.length) drawStroke(currentStroke,'#1976d2');  
+  $('strokeBadge').textContent = userStrokes.length+' '+(isUpper()?'画':'かく');  
+}  
+function undoStroke(){ if(isAnswered||!userStrokes.length) return; hideToast(); userStrokes.pop(); redrawCanvas(); }  
+function clearCanvas(){ if(isAnswered) return; hideToast(); userStrokes=[]; currentStroke=[]; redrawCanvas(); }
 
-  // 十字リーダー線
-  ctx.save();
-  ctx.strokeStyle = '#dcedc8';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([8, 6]);
-  ctx.beginPath();
-  ctx.moveTo(150, 0); ctx.lineTo(150, 300);
-  ctx.moveTo(0, 150); ctx.lineTo(300, 150);
-  ctx.stroke();
-  ctx.restore();
-
-  userStrokes.forEach((stroke, idx) => {
-    const color = (strokeColors && strokeColors[idx]) ? strokeColors[idx] : '#222222';
-    drawSingleStroke(stroke, color);
-  });
-
-  if (currentStroke.length > 0) {
-    drawSingleStroke(currentStroke, '#222222');
-  }
-
-  const unit = isUpperGrade() ? '画' : 'かく';
-  document.getElementById('strokeBadge').textContent = `${userStrokes.length} ${unit}`;
+// ---------- 判定 ----------  
+function resample(pts,steps){  
+  if(pts.length===1) return Array(steps+1).fill(pts[0]);  
+  var total=0, ds=[0];  
+  for(var i=1;i<pts.length;i++){ total+=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y); ds.push(total); }  
+  if(total===0) return Array(steps+1).fill(pts[0]);  
+  var out=[];  
+  for(var s=0;s<=steps;s++){  
+    var tg=total*s/steps, idx=1;  
+    while(idx<ds.length-1 && ds[idx]<tg) idx++;  
+    var seg=ds[idx]-ds[idx-1], t=seg===0?0:(tg-ds[idx-1])/seg;  
+    out.push({x:pts[idx-1].x+(pts[idx].x-pts[idx-1].x)*t, y:pts[idx-1].y+(pts[idx].y-pts[idx-1].y)*t});  
+  }  
+  return out;  
+}  
+function bbox(list){  
+  var a=Infinity,b=Infinity,c=-Infinity,d=-Infinity;  
+  list.forEach(function(s){ s.forEach(function(p){ if(p.x<a)a=p.x; if(p.y<b)b=p.y; if(p.x>c)c=p.x; if(p.y>d)d=p.y; }); });  
+  return {w:Math.max(c-a,1),h:Math.max(d-b,1),cx:(a+c)/2,cy:(b+d)/2};  
+}  
+function dist(s1,s2){ var t=0; for(var i=0;i<s1.length;i++) t+=Math.hypot(s1[i].x-s2[i].x,s1[i].y-s2[i].y); return t/s1.length; }  
+function dirSim(s1,s2){  
+  var p1=Math.floor(s1.length/3), p2=Math.floor(s1.length*2/3), last=s1.length-1;  
+  function vs(a1,a2,b1,b2){  
+    var x1=a2.x-a1.x,y1=a2.y-a1.y,x2=b2.x-b1.x,y2=b2.y-b1.y, l1=Math.hypot(x1,y1), l2=Math.hypot(x2,y2);  
+    if(l1<2.5||l2<2.5) return 1;  
+    return (x1*x2+y1*y2)/(l1*l2);  
+  }  
+  return Math.min(vs(s1[0],s1[p1],s2[0],s2[p1]), vs(s1[p1],s1[p2],s2[p1],s2[p2]), vs(s1[p2],s1[last],s2[p2],s2[last]));  
 }
 
-function drawSingleStroke(pts, color) {
-  if (pts.length === 0) return;
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 9;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.beginPath();
-  ctx.moveTo(pts[0].x, pts[0].y);
-  for (let i = 1; i < pts.length; i++) {
-    ctx.lineTo(pts[i].x, pts[i].y);
+function checkAnswer(){  
+  var u=isUpper();  
+  if(!userStrokes.length){ showToast(u?'まずは枠の中に漢字を書いてください！':'まずは しかくの なかに かんじを かいてね！'); return; }  
+  hideToast();  
+  var target=questions[currentIndex][0];
+
+  // お手本が取れなかった場合：正解扱いにせず、自分で見くらべてもらう（記録にも数えない）  
+  if(currentRefStrokes.length===0){  
+    showResultFeedback('info', u?'お手本を読み込めませんでした。上の漢字と見くらべて、自分で確かめましょう。':'おてほんが よみこめなかったよ。したの かんじと みくらべてみよう。', target);  
+    return;  
   }
-  ctx.stroke();
-  ctx.restore();
+
+  var expected=currentRefStrokes.length, actual=userStrokes.length;  
+  var raw=userStrokes.map(function(s){ return resample(s,15); });  
+  var ub=bbox(raw), rb=bbox(currentRefStrokes);  
+  var scale=Math.max(rb.w,rb.h,35)/Math.max(ub.w,ub.h,85);  
+  var norm=raw.map(function(st){ return st.map(function(p){ return {x:(p.x-ub.cx)*scale+rb.cx, y:(p.y-ub.cy)*scale+rb.cy}; }); });
+
+  var colors=[], firstErr='', n=Math.min(actual,expected);  
+  for(var i=0;i<n;i++){  
+    var us=norm[i], rs=currentRefStrokes[i], rev=rs.slice().reverse();  
+    var dN=dist(us,rs), dR=dist(us,rev);  
+    var sD=Math.hypot(us[0].x-rs[0].x,us[0].y-rs[0].y), eD=Math.hypot(us[15].x-rs[15].x,us[15].y-rs[15].y);  
+    var ok = dN<26 && sD<33 && eD<33 && dirSim(us,rs)>0.25 && dN<dR;  
+    if(ok){ colors.push('#2e7d32'); continue; }  
+    colors.push('#e53935');  
+    if(firstErr) continue;  
+    if(dR<25 && dR<dN){ firstErr = u ? (i+1)+'画目の書く向きが逆です！' : (i+1)+'かくめの かく むきが ぎゃくだよ！'; }  
+    else {  
+      var other=-1;  
+      for(var j=0;j<expected;j++){ if(j!==i && dist(us,currentRefStrokes[j])<23 && dirSim(us,currentRefStrokes[j])>0.3){ other=j; break; } }  
+      if(other!==-1) firstErr = u ? (i+1)+'画目は、本当は'+(other+1)+'画目に書く線です！' : (i+1)+'かくめは、ほんとうは '+(other+1)+'かくめに かく せんだよ！';  
+      else firstErr = u ? (i+1)+'画目の形や書き始めの場所が違います！' : (i+1)+'かくめの かたちや ばしょが ちがうよ！';  
+    }  
+  }  
+  for(var k=n;k<actual;k++) colors.push('#e53935');  
+  redrawCanvas(colors);
+
+  if(actual!==expected){  
+    var ct = u ? '画数が違います！（正しくは '+expected+'画）' : 'かくすうが ちがうよ！（ただしくは '+expected+'かく）';  
+    showResultFeedback('ng', firstErr ? ct+'<br>'+(u?'また、':'あと、')+firstErr : ct, target);  
+  } else if(firstErr){ showResultFeedback('ng', firstErr, target); }  
+  else showResultFeedback('ok', u?'大正解！書き順も画数もばっちりです！':'だいせいかい！ かきじゅんも かくすうも ばっちり！', target);  
 }
 
-function undoStroke() {
-  if (isAnswered || userStrokes.length === 0) return;
-  userStrokes.pop();
-  redrawCanvas();
+function showResultFeedback(kind,msg,target){  
+  isAnswered=true;  
+  $('drawControls').style.display='none';var fb=$('feedbackBox'); fb.style.display='block';  
+  fb.className='feedback-box '+(kind==='ok'?'feedback-ok':kind==='ng'?'feedback-ng':'feedback-info');  
+  $('feedbackMessage').innerHTML=(kind==='ok'?'💮 ':kind==='ng'?'💡 ':'ℹ️ ')+msg;  
+  $('answerKanjiDisplay').innerHTML=(isUpper()?'答え：':'こたえ：')+' <strong style="font-size:2rem;color:#1976d2">'+target+'</strong>';  
+  if(kind==='info'){  
+    results.push({kanji:target,reading:questions[currentIndex][1],isCorrect:false,rawItem:questions[currentIndex]});  
+    return;  
+  }  
+  results.push({kanji:target,reading:questions[currentIndex][1],isCorrect:kind==='ok',rawItem:questions[currentIndex]});  
+  if(kind==='ok') recordCorrectAnswer(target,questions[currentIndex][3]); else playStrokeAnimation();  
 }
 
-function clearCanvas() {
-  if (isAnswered) return;
-  userStrokes = [];
-  currentStroke = [];
-  redrawCanvas();
+function playStrokeAnimation(){  
+  if(animTimer) clearInterval(animTimer);  
+  var svg=$('guideSvg'); svg.innerHTML='';  
+  if(!currentRawPaths.length) return;  
+  var NS='http://www.w3.org/2000/svg';  
+  function mk(tag,attrs){ var e=document.createElementNS(NS,tag); for(var k in attrs) e.setAttribute(k,attrs[k]); return e; }  
+  currentRawPaths.forEach(function(d){  
+    svg.appendChild(mk('path',{d:d,fill:'none',stroke:'rgba(25,118,210,.18)','stroke-width':5,'stroke-linecap':'round','stroke-linejoin':'round'}));  
+  });  
+  var idx=0;  
+  function next(){  
+    if(idx>=currentRawPaths.length){ clearInterval(animTimer); return; }  
+    var p=mk('path',{d:currentRawPaths[idx],fill:'none',stroke:'#1976d2','stroke-width':5,'stroke-linecap':'round','stroke-linejoin':'round'});  
+    svg.appendChild(p);  
+    var s=p.getPointAtLength(0), g=mk('g',{});  
+    g.appendChild(mk('circle',{cx:s.x,cy:s.y,r:5.2,fill:'#fffde7',stroke:'#d32f2f','stroke-width':1.3}));  
+    var t=mk('text',{x:s.x,y:s.y+2.1,'text-anchor':'middle','font-size':idx>=9?5.8:6.6,'font-weight':'bold',fill:'#c62828'});  
+    t.textContent=String(idx+1); g.appendChild(t); svg.appendChild(g);  
+    idx++;  
+  }  
+  next(); animTimer=setInterval(next,600);  
 }
 
-// 16点等間隔リサンプリング
-function resampleStroke(pts, steps = 15) {
-  if (pts.length === 1) return Array(steps + 1).fill(pts[0]);
-  let totalLen = 0;
-  const dists = [0];
-  for (let i = 1; i < pts.length; i++) {
-    const d = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
-    totalLen += d;
-    dists.push(totalLen);
-  }
-  if (totalLen === 0) return Array(steps + 1).fill(pts[0]);
+function nextQuestion(){ currentIndex++; if(currentIndex<questions.length) loadQuestion(); else showFinalResult(); }
 
-  const res = [];
-  for (let s = 0; s <= steps; s++) {
-    const target = (totalLen * s) / steps;
-    let idx = 1;
-    while (idx < dists.length - 1 && dists[idx] < target) idx++;
-    const prevD = dists[idx - 1];
-    const segD = dists[idx] - prevD;
-    const t = segD === 0 ? 0 : (target - prevD) / segD;
-    res.push({
-      x: pts[idx - 1].x + (pts[idx].x - pts[idx - 1].x) * t,
-      y: pts[idx - 1].y + (pts[idx].y - pts[idx - 1].y) * t
-    });
-  }
-  return res;
+function showFinalResult(){  
+  var u=isUpper();  
+  $('quizScreen').style.display='none'; $('resultScreen').style.display='block';  
+  var total=results.length, ok=results.filter(function(r){ return r.isCorrect; }).length, ng=total-ok;  
+  $('finalScoreText').textContent = u ? total+'問中 '+ok+'問 正解！' : total+'もんちゅう '+ok+'もん せいかい！';  
+  $('hanamaruIcon').textContent=ok===total?'💮':(ok>=Math.ceil(total*.6)?'🎉':'🌱');var rb=$('retryWrongBtn');  
+  if(ng>0){ rb.style.display='inline-block'; rb.textContent = u ? '💪 まちがえた漢字だけ復習する（'+ng+'問）' : '💪 まちがえた かんじだけ ふくしゅうする（'+ng+'もん）'; }  
+  else rb.style.display='none';  
+  var h='<div style="font-weight:bold;margin-bottom:8px;color:#555">'+(u?'今回の問題：':'こんかいの もんだい：')+'</div>';  
+  results.forEach(function(r,i){  
+    var lab = r.isCorrect ? (u?'⭕ 正解':'⭕ せいかい') : (u?'💪 もう一度':'💪 もういちど');  
+    h+='<div class="review-item"><div><span style="color:#888;margin-right:8px">'+(i+1)+'.</span><span class="review-kanji">'+r.kanji+'</span><span>（'+r.reading+'）</span></div><div style="font-weight:bold;color:'+(r.isCorrect?'#2e7d32':'#e65100')+'">'+lab+'</div></div>';  
+  });  
+  $('reviewList').innerHTML=h;  
 }
 
-function getBBox(strokeList) {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  strokeList.forEach(s => s.forEach(p => {
-    if (p.x < minX) minX = p.x;
-    if (p.y < minY) minY = p.y;
-    if (p.x > maxX) maxX = p.x;
-    if (p.y > maxY) maxY = p.y;
-  }));
-  return {
-    minX, minY, maxX, maxY,
-    w: Math.max(maxX - minX, 1),
-    h: Math.max(maxY - minY, 1),
-    cx: (minX + maxX) / 2,
-    cy: (minY + maxY) / 2
-  };
-}
+// ---------- ごほうび ----------  
+const REWARD_KEY='kanji_drill_reward_v1';  
+function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }  
+function loadStats(){  
+  var t=todayStr(), def={todayDate:t,todayCount:0,totalCorrect:0,mastered:{"1":[],"2":[],"3":[],"4":[],"5":[],"6":[]}};  
+  try {  
+    var raw=safeStore.getItem(REWARD_KEY); if(!raw) return def;  
+    var d=JSON.parse(raw);  
+    if(!d.mastered) d.mastered=def.mastered;  
+    if(d.todayDate!==t){ d.todayDate=t; d.todayCount=0; saveStats(d); }  
+    return d;  
+  } catch(e){ return def; }  
+}  
+function saveStats(d){ try{ safeStore.setItem(REWARD_KEY,JSON.stringify(d)); }catch(e){} }  
+function rankIcon(c,t){ if(!t||!c) return '🌱'; var r=c/t; return r>=1?'👑':r>=.7?'🥇':r>=.4?'🥈':'🥉'; }  
+function recordCorrectAnswer(k,g){  
+  var s=loadStats(); s.todayCount++; s.totalCorrect++;  
+  var key=String(g); if(!s.mastered[key]) s.mastered[key]=[];  
+  if(s.mastered[key].indexOf(k)<0) s.mastered[key].push(k);  
+  saveStats(s); renderRewardBar();  
+}  
+function renderRewardBar(){  
+  var s=loadStats(), u=isUpper(), unit=u?'問':'もん';  
+  $('todayCountBadge').textContent = (u?'☀️ 今日：':'☀️ きょう：')+s.todayCount+unit;  
+  if(currentGrade==='tricky') $('gradeMasterBadge').textContent='🔥 累計正解：'+s.totalCorrect+'問';  
+  else {  
+    var total=KANJI_DATA.filter(function(i){ return String(i[3])===currentGrade; }).length;  
+    var cl=(s.mastered[currentGrade]||[]).length;  
+    $('gradeMasterBadge').textContent=rankIcon(cl,total)+' '+currentGrade+(u?'年：':'ねん：')+cl+' / '+total+'字';  
+  }  
+  $('stampBookBtn').textContent = u?'🏆 記録を見る':'🏆 きろくを見る';  
+}  
+function openRewardModal(){  
+  var s=loadStats(), u=isUpper();  
+  $('modalTitle').textContent = u?'🏆 がんばりスタンプ帳':'🏆 がんばり スタンプちょう';  
+  $('modalSummary').textContent = u ? 'これまでの累計正解数：'+s.totalCorrect+' 問（今日：'+s.todayCount+'問）' : 'これまでの ごうけい せいかい：'+s.totalCorrect+' もん（きょう：'+s.todayCount+' もん）';  
+  var h='';  
+  for(var g=1;g<=6;g++){  
+    var total=KANJI_DATA.filter(function(i){ return i[3]===g; }).length, cl=(s.mastered[String(g)]||[]).length;  
+    var pct=total>0?Math.round(cl/total*100):0;  
+    h+='<div class="grade-progress-row"><span style="font-weight:bold;min-width:68px">'+rankIcon(cl,total)+' '+g+'年生</span><div class="progress-track"><div class="progress-fill" style="width:'+pct+'%"></div></div><span style="font-weight:bold;min-width:85px;text-align:right">'+cl+' / '+total+'字</span></div>';  
+  }  
+  $('modalGradeList').innerHTML=h;  
+  $('storageNote').textContent = safeStore.persistent ? '' : '※ この表示方法では記録をずっと保存できません。ページを閉じると消えます。';  
+  $('rewardModal').style.display='flex';  
+}  
+function closeRewardModal(){ $('rewardModal').style.display='none'; }
 
-function calcStrokeDistance(s1, s2) {
-  let sum = 0;
-  for (let i = 0; i < s1.length; i++) {
-    sum += Math.hypot(s1[i].x - s2[i].x, s1[i].y - s2[i].y);
-  }
-  return sum / s1.length;
-}
-
-// 前半・後半の進行方向ベクトルの一致度（逆筆順・折れ線判定の要）
-function calcDirectionSimilarity(s1, s2) {
-  const mid = Math.floor(s1.length / 2);
-  const last = s1.length - 1;
-
-  const vecSim = (a1, a2, b1, b2) => {
-    const vx1 = a2.x - a1.x, vy1 = a2.y - a1.y;
-    const vx2 = b2.x - b1.x, vy2 = b2.y - b1.y;
-    const len1 = Math.hypot(vx1, vy1);
-    const len2 = Math.hypot(vx2, vy2);
-    if (len1 < 2 || len2 < 2) return 1; // 点に近い短い画は許容
-    return (vx1 * vx2 + vy1 * vy2) / (len1 * len2);
-  };
-
-  const sim1 = vecSim(s1[0], s1[mid], s2[0], s2[mid]);
-  const sim2 = vecSim(s1[mid], s1[last], s2[mid], s2[last]);
-  return Math.min(sim1, sim2);
-}
-
-// 高度化した筆順・画数判定処理
-function checkAnswer() {
-  const upper = isUpperGrade();
-  if (userStrokes.length === 0) {
-    alert(upper ? 'まずは枠の中に漢字を書いてください！' : 'まずは しかくの なかに かんじを かいてね！');
-    return;
-  }
-
-  const q = questions[currentIndex];
-  const targetKanji = q[0];
-
-  if (currentRefStrokes.length === 0) {
-    showResultFeedback(true, 'ネットが つながっていないため、かいた ことを はなまるに しました！', targetKanji);
-    return;
-  }
-
-  const expectedCount = currentRefStrokes.length;
-  const actualCount = userStrokes.length;
-
-  const rawResampled = userStrokes.map(s => resampleStroke(s, 15));
-  const uBox = getBBox(rawResampled);
-  const rBox = getBBox(currentRefStrokes);
-
-  const uSize = Math.max(uBox.w, uBox.h, 85);
-  const rSize = Math.max(rBox.w, rBox.h, 35);
-  const scale = rSize / uSize;
-
-  const normUserStrokes = rawResampled.map(stroke =>
-    stroke.map(p => ({
-      x: (p.x - uBox.cx) * scale + rBox.cx,
-      y: (p.y - uBox.cy) * scale + rBox.cy
-    }))
-  );
-
-  const strokeColors = [];
-  let firstErrorMsg = '';
-  const checkLen = Math.min(actualCount, expectedCount);
-  const lastIdx = 15;
-
-  for (let i = 0; i < checkLen; i++) {
-    const uStroke = normUserStrokes[i];
-    const rStroke = currentRefStrokes[i];
-    const rStrokeRev = [...rStroke].reverse();
-
-    const distNormal = calcStrokeDistance(uStroke, rStroke);
-    const distReverse = calcStrokeDistance(uStroke, rStrokeRev);
-    const startDist = Math.hypot(uStroke[0].x - rStroke[0].x, uStroke[0].y - rStroke[0].y);
-    const endDist = Math.hypot(uStroke[lastIdx].x - rStroke[lastIdx].x, uStroke[lastIdx].y - rStroke[lastIdx].y);
-    const dirSim = calcDirectionSimilarity(uStroke, rStroke);
-
-    // 形状・始点・終点・進行方向の4条件をバランスよく評価
-    const isOk = (
-      distNormal < 26 &&
-      startDist < 33 &&
-      endDist < 33 &&
-      dirSim > 0.25 &&
-      distNormal < distReverse
-    );
-
-    if (isOk) {
-      strokeColors.push('#2e7d32');
-    } else {
-      strokeColors.push('#e53935');
-      if (!firstErrorMsg) {
-        if (distReverse < 25 && distReverse < distNormal) {
-          firstErrorMsg = upper
-            ? `${i + 1}画目の書く向きが逆です！`
-            : `${i + 1}かくめの かく むきが ぎゃくだよ！`;
-        } else {
-          let matchedOther = -1;
-          for (let j = 0; j < expectedCount; j++) {
-            if (j !== i && calcStrokeDistance(uStroke, currentRefStrokes[j]) < 23 && calcDirectionSimilarity(uStroke, currentRefStrokes[j]) > 0.3) {
-              matchedOther = j;
-              break;
-            }
-          }
-          if (matchedOther !== -1) {
-            firstErrorMsg = upper
-              ? `${i + 1}画目は、本当は${matchedOther + 1}画目に書く線です！`
-              : `${i + 1}かくめは、ほんとうは ${matchedOther + 1}かくめに かく せんだよ！`;
-          } else {
-            firstErrorMsg = upper
-              ? `${i + 1}画目の形や書き始めの場所が違います！`
-              : `${i + 1}かくめの かたちや ばしょが ちがうよ！`;
-          }
-        }
-      }
-    }
-  }
-
-  for (let i = checkLen; i < actualCount; i++) {
-    strokeColors.push('#e53935');
-  }
-
-  redrawCanvas(strokeColors);
-
-  if (actualCount !== expectedCount) {
-    const countText = upper
-      ? `画数が違います！（正しくは ${expectedCount}画）`
-      : `かくすうが ちがうよ！（ただしくは ${expectedCount}かく）`;
-    const msg = firstErrorMsg
-      ? `${countText}<br>${upper ? 'また、' : 'あと、'}${firstErrorMsg}`
-      : countText;
-    showResultFeedback(false, msg, targetKanji);
-  } else if (firstErrorMsg) {
-    showResultFeedback(false, firstErrorMsg, targetKanji);
-  } else {
-    const okMsg = upper
-      ? '大正解！書き順も画数もばっちりです！'
-      : 'だいせいかい！ かきじゅんも かくすうも ばっちり！';
-    showResultFeedback(true, okMsg, targetKanji);
-  }
-}
-
-function showResultFeedback(isCorrect, message, targetKanji) {
-  isAnswered = true;
-  const upper = isUpperGrade();
-  document.getElementById('drawControls').style.display = 'none';
-
-  const fbBox = document.getElementById('feedbackBox');
-  fbBox.style.display = 'block';
-  fbBox.className = 'feedback-box ' + (isCorrect ? 'feedback-ok' : 'feedback-ng');
-
-  document.getElementById('feedbackMessage').innerHTML = (isCorrect ? '💮 ' : '💡 ') + message;
-  const ansLabel = upper ? '答え：' : 'こたえ：';
-  document.getElementById('answerKanjiDisplay').innerHTML = `${ansLabel} <strong style="font-size:2rem; color:#1976d2;">${targetKanji}</strong>`;
-
-  results.push({
-    kanji: targetKanji,
-    reading: questions[currentIndex][1],
-    isCorrect: isCorrect,
-    rawItem: questions[currentIndex]
-  });
-
-  if (!isCorrect) {
-    playStrokeAnimation();
-  }
-}
-
-// お手本の書き順アニメーション＋書き始め番号バッジ表示
-function playStrokeAnimation() {
-  if (animTimer) clearInterval(animTimer);
-  const svg = document.getElementById('guideSvg');
-  svg.innerHTML = '';
-  if (currentRawPaths.length === 0) return;
-
-  // 薄く全体のガイドを敷く
-  currentRawPaths.forEach(d => {
-    const bgPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    bgPath.setAttribute('d', d);
-    bgPath.setAttribute('fill', 'none');
-    bgPath.setAttribute('stroke', 'rgba(25, 118, 210, 0.18)');
-    bgPath.setAttribute('stroke-width', '5');
-    bgPath.setAttribute('stroke-linecap', 'round');
-    bgPath.setAttribute('stroke-linejoin', 'round');
-    svg.appendChild(bgPath);
-  });
-
-  let idx = 0;
-  const drawNext = () => {
-    if (idx >= currentRawPaths.length) {
-      clearInterval(animTimer);
-      return;
-    }
-    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p.setAttribute('d', currentRawPaths[idx]);
-    p.setAttribute('fill', 'none');
-    p.setAttribute('stroke', '#1976d2');
-    p.setAttribute('stroke-width', '5');
-    p.setAttribute('stroke-linecap', 'round');
-    p.setAttribute('stroke-linejoin', 'round');
-    svg.appendChild(p);
-
-    // 各画の始点に番号バッジ（1, 2, 3...）を表示
-    const startPt = p.getPointAtLength(0);
-    const badgeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    circle.setAttribute('cx', startPt.x);
-    circle.setAttribute('cy', startPt.y);
-    circle.setAttribute('r', '5.5');
-    circle.setAttribute('fill', '#ffffff');
-    circle.setAttribute('stroke', '#e53935');
-    circle.setAttribute('stroke-width', '1.4');
-
-    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    text.setAttribute('x', startPt.x);
-    text.setAttribute('y', startPt.y + 2.3);
-    text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('font-size', '7');
-    text.setAttribute('font-weight', 'bold');
-    text.setAttribute('fill', '#d32f2f');
-    text.textContent = (idx + 1).toString();
-
-    badgeGroup.appendChild(circle);
-    badgeGroup.appendChild(text);
-    svg.appendChild(badgeGroup);
-
-    idx++;
-  };
-
-  drawNext();
-  animTimer = setInterval(drawNext, 600);
-}
-
-function nextQuestion() {
-  currentIndex++;
-  if (currentIndex < questions.length) {
-    loadQuestion();
-  } else {
-    showFinalResult();
-  }
-}
-
-function showFinalResult() {
-  const upper = isUpperGrade();
-  document.getElementById('quizScreen').style.display = 'none';
-  document.getElementById('resultScreen').style.display = 'block';
-
-  const totalQ = results.length;
-  const correctCount = results.filter(r => r.isCorrect).length;
-  const wrongCount = totalQ - correctCount;
-
-  document.getElementById('finalScoreText').textContent = upper
-    ? `${totalQ}問中 ${correctCount}問 正解！`
-    : `${totalQ}もんちゅう ${correctCount}もん せいかい！`;
-
-  if (correctCount === totalQ) {
-    document.getElementById('hanamaruIcon').textContent = '💮';
-  } else if (correctCount >= Math.ceil(totalQ * 0.6)) {
-    document.getElementById('hanamaruIcon').textContent = '🎉';
-  } else {
-    document.getElementById('hanamaruIcon').textContent = '🌱';
-  }
-
-  // まちがえた問題がある場合だけ「復習ボタン」を表示
-  const retryBtn = document.getElementById('retryWrongBtn');
-  if (wrongCount > 0) {
-    retryBtn.style.display = 'inline-block';
-    retryBtn.textContent = upper
-      ? `💪 まちがえた漢字だけ復習する（${wrongCount}問）`
-      : `💪 まちがえた かんじだけ ふくしゅうする（${wrongCount}もん）`;
-  } else {
-    retryBtn.style.display = 'none';
-  }
-
-  const headerLabel = upper ? '今回の問題：' : 'こんかいの もんだい：';
-  let listHtml = `<div style="font-weight:bold; margin-bottom:8px; color:#555;">${headerLabel}</div>`;
-  results.forEach((r, i) => {
-    const statusLabel = r.isCorrect
-      ? (upper ? '⭕ 正解' : '⭕ せいかい')
-      : (upper ? '💪 もう一度' : '💪 もういちど');
-    listHtml += `
-      <div class="review-item">
-        <div>
-          <span style="color:#888; margin-right:8px;">${i + 1}.</span>
-          <span class="review-kanji">${r.kanji}</span>
-          <span>（${r.reading}）</span>
-        </div>
-        <div style="font-weight:bold; color:${r.isCorrect ? '#2e7d32' : '#e65100'};">
-          ${statusLabel}
-        </div>
-      </div>
-    `;
-  });
-  document.getElementById('reviewList').innerHTML = listHtml;
-}
-</script>
-</body>
-</html>
-
-返信	全員に返信	転送
+// ---------- 起動 ----------  
+function initApp(){  
+  try { setupCanvasEvents(); updateUILanguage(); startNewSet(); }  
+  catch(err){ console.error('初期化エラー:',err); showToast('起動中に問題が発生しました。再読み込みしてください。'); }  
+}  
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initApp); else initApp();  
+</script>  
+</body>  
+</html>  
